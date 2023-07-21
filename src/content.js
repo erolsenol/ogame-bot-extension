@@ -33,7 +33,10 @@ let gameStatus = StorageGetInitialize("gameStatus", initGameStatus);
 let overmark = StorageGetInitialize("overmark", initOvermark);
 let research = StorageGetInitialize("research", initResearch);
 let shipyard = StorageGetInitialize("shipyard", initShipyard);
-let resourceGeneration = StorageGetInitialize("resourceGeneration", false);
+let resourceGeneration = StorageGetInitialize(
+  "resourceGeneration",
+  initResource
+);
 let gamePlayStatus = StorageGetInitialize("gamePlayStatus", initGamePlayStatus);
 
 //resource
@@ -122,11 +125,11 @@ function getProducers() {
 
     countdown.producers = Number(endTime);
     storageSet("countdown", countdown);
-    console.log("countdown", countdown);
-  } else {
-    countdown.producers = 0;
-    storageSet("countdown", countdown);
   }
+  //   else {
+  //     countdown.producers = 0;
+  //     storageSet("countdown", countdown);
+  //   }
 }
 
 //facility
@@ -214,11 +217,11 @@ function GetLfBuildings() {
 
     countdown.lifeBuilding = Number(endTime);
     storageSet("countdown", countdown);
-    console.log("countdown", countdown);
-  } else {
-    countdown.lifeBuilding = 0;
-    storageSet("countdown", countdown);
   }
+  //   else {
+  //     countdown.lifeBuilding = 0;
+  //     storageSet("countdown", countdown);
+  //   }
 }
 
 //research
@@ -380,6 +383,22 @@ function getResourceGeneration() {
   //   console.log("resourceGeneration", resourceGeneration);
 }
 
+function hasError() {
+  const mainFrameError = document.querySelector("#main-frame-error");
+  if (mainFrameError) {
+    return true;
+  }
+}
+
+function hasLogin() {
+  const joinGame = getElId("joinGame");
+  if (joinGame) {
+    joinGame.children[1].click();
+    return false;
+  }
+  return true;
+}
+
 function gameInitialize() {
   getResources();
   getProducers();
@@ -396,6 +415,17 @@ async function start() {
     return;
   }
 
+  const error = hasError();
+  if (error) {
+    setTimeout(() => {
+      location.reload();
+    }, 300000);
+    return;
+  }
+
+  const login = hasLogin();
+  if (!login) return;
+
   gameInitialize();
 
   const countdown = StorageGetInitialize("countdown", initCountdown);
@@ -406,10 +436,6 @@ async function start() {
     const { metalMine, crystalMine, deuteriumSynthesizer, solarPlant } =
       storageGet("producer") || {};
 
-    if (!metalMine && !crystalMine && !deuteriumSynthesizer && !solarPlant) {
-      await menuClick(1);
-    }
-
     const producersEl = getElId("producers");
 
     if (!producersEl) {
@@ -417,26 +443,125 @@ async function start() {
       return;
     }
 
-    if (metalMine - 3 <= crystalMine) {
+    const { energy } = StorageGetInitialize("resource", initResource);
+
+    if (energy < 0) {
+      await mineUpgradeClick("solarPlant", producersEl);
+      return;
+    } else if (metalMine - 2 <= crystalMine) {
       await mineUpgradeClick("metalMine", producersEl);
-    } else if (crystalMine - 3 <= deuteriumSynthesizer) {
-      await mineUpgradeClick("crystalMine", producersEl);
+      return;
     } else {
-      await mineUpgradeClick("deuteriumSynthesizer", producersEl);
+      if (crystalMine - 2 <= deuteriumSynthesizer) {
+        await mineUpgradeClick("crystalMine", producersEl);
+        return;
+      } else {
+        await mineUpgradeClick("deuteriumSynthesizer", producersEl);
+        return;
+      }
     }
   }
 }
 
 function mineUpgradeClick(mineName, searchEl = document) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       const mineContainer = searchEl.querySelector(`li[class~="${mineName}"]`);
       const upgradeEl = mineContainer.querySelector(`button[class~="upgrade"]`);
-      upgradeEl.click();
+      if (upgradeEl) {
+        upgradeEl.click();
+        setTimeout(() => {
+          resolve(true);
+        }, 2000);
+      } else {
+        await mineUpgradeTimeCalculation(mineContainer);
+      }
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+function mineUpgradeTimeCalculation(mineEl) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!mineEl.getAttribute("class").includes("showsDetails")) {
+        mineEl.children[0].click();
+      }
+
+      const { metal, crystal, deuterium, energy } =
+        storageGet("resource") || {};
+
+      const mineProduction = StorageGetInitialize(
+        "resourceGeneration",
+        initResource
+      );
+
+      if (mineProduction.metal == 0) {
+        await menuClick(1, 1);
+        resolve(true);
+        return;
+      }
 
       setTimeout(() => {
-        resolve(true);
-      }, 3000);
+        const technologyDetails = getElId("technologydetails");
+        if (!technologyDetails) {
+          resolve(true);
+          return;
+        }
+
+        const upgradeBtn = technologyDetails.querySelector(
+          "button[class='upgrade']"
+        );
+        if (upgradeBtn && !upgradeBtn.hasAttribute("disabled")) {
+          upgradeBtn.click();
+          resolve(true);
+          return;
+        }
+
+        let remaningTime = 0;
+        const costsArea = technologyDetails.querySelector("div[class='costs']");
+        costsArea.querySelectorAll("li").forEach((costItem) => {
+          const classText = costItem.getAttribute("class");
+          if (classText.includes("metal")) {
+            const requirement = Number(costItem.getAttribute("data-value"));
+            const difference = metal - requirement;
+
+            if (difference < 0) {
+              const productionSecond = mathStabileRound(
+                (Math.abs(difference) / mineProduction.metal) * 60 * 60
+              );
+              remaningTime = productionSecond;
+            }
+          } else if (classText.includes("crystal")) {
+            const requirement = Number(costItem.getAttribute("data-value"));
+            const difference = crystal - requirement;
+            if (difference < 0) {
+              const productionSecond = mathStabileRound(
+                (Math.abs(difference) / mineProduction.crystal) * 60 * 60
+              );
+              if (remaningTime < productionSecond) {
+                remaningTime = productionSecond;
+              }
+            }
+          } else if (classText.includes("deuterium")) {
+            const requirement = Number(costItem.getAttribute("data-value"));
+            const difference = deuterium - requirement;
+            if (difference < 0) {
+              const productionSecond = mathStabileRound(
+                (Math.abs(difference) / mineProduction.deuterium) * 60 * 60
+              );
+              if (remaningTime < productionSecond) {
+                remaningTime = productionSecond;
+              }
+            }
+          }
+        });
+        const countdown = StorageGetInitialize("countdown", initCountdown);
+        const now = mathStabileRound(Date.now() / 1000);
+        countdown.producers = remaningTime + now;
+        storageSet("countdown", countdown);
+      }, 2000);
     } catch (error) {
       reject(error);
     }
@@ -460,8 +585,8 @@ function menuClick(number, subNumber = 0) {
 
     setTimeout(() => {
       resolve(true);
-    }, 3000);
+    }, 2000);
   });
 }
 
-setInterval(start, 2500);
+setInterval(start, 3500);

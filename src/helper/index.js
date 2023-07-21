@@ -48,6 +48,12 @@ export function storageGet(key) {
   const item = JSON.parse(itemStr);
   const now = new Date();
   // compare the expiry time of the item with the current time
+  if (key == "countdown") {
+    console.log("item.expiry", item.expiry);
+    console.log("now.getTime()", now.getTime());
+    console.log("condition :", now.getTime() > item.expiry);
+  }
+
   if (now.getTime() > item.expiry) {
     // If the item is expired, delete the item from storage
     // and return null
