@@ -50,6 +50,7 @@ export const initLifeform = {
 export const initCountdown = {
   producers: 0,
   lifeBuilding: 0,
+  facilities: 0,
 };
 
 export const initGameStatus = {

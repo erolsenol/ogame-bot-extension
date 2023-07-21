@@ -168,6 +168,13 @@ function getFacilities() {
   }
   storageSet("facility", facility);
   //   console.log("facility", facility);
+  const countDownEl = getElId("countdownbuildingDetails");
+  if (countDownEl) {
+    const endTime = countDownEl.getAttribute("data-end");
+
+    countdown.facilities = Number(endTime);
+    storageSet("countdown", countdown);
+  }
 }
 
 //lifeform
@@ -432,6 +439,7 @@ async function start() {
   const now = mathStabileRound(Date.now() / 1000);
 
   gamePlayStatus.producers.status = 1;
+  console.log("producers time:", countdown.producers - now);
   if (gamePlayStatus.producers.status && countdown.producers < now) {
     const { metalMine, crystalMine, deuteriumSynthesizer, solarPlant } =
       storageGet("producer") || {};
@@ -440,6 +448,22 @@ async function start() {
 
     if (!producersEl) {
       await menuClick(1);
+      return;
+    }
+
+    const resMetalEl = getElId("resources_metal");
+    if (resMetalEl.getAttribute("class").includes("overmark")) {
+      await mineUpgradeClick("metalStorage", producersEl);
+      return;
+    }
+    const resCrystalEl = getElId("resources_metal");
+    if (resCrystalEl.getAttribute("class").includes("overmark")) {
+      await mineUpgradeClick("crystalStorage", producersEl);
+      return;
+    }
+    const resDeuteriumEl = getElId("resources_metal");
+    if (resDeuteriumEl.getAttribute("class").includes("overmark")) {
+      await mineUpgradeClick("deuteriumStorage", producersEl);
       return;
     }
 
@@ -475,6 +499,7 @@ function mineUpgradeClick(mineName, searchEl = document) {
         }, 2000);
       } else {
         await mineUpgradeTimeCalculation(mineContainer);
+        resolve(true);
       }
     } catch (error) {
       reject(error);
@@ -561,6 +586,10 @@ function mineUpgradeTimeCalculation(mineEl) {
         const now = mathStabileRound(Date.now() / 1000);
         countdown.producers = remaningTime + now;
         storageSet("countdown", countdown);
+        if (!(remaningTime + now > now)) {
+          location.reload();
+        }
+        resolve(true);
       }, 2000);
     } catch (error) {
       reject(error);
