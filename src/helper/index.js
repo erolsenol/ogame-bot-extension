@@ -62,3 +62,5 @@ export function StorageGetInitialize(name, value) {
   if (!item) item = value;
   return item;
 }
+
+export default { storageSet, storageGet };

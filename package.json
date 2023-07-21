@@ -8,7 +8,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "vue": "^3.3.4"
+    "@mdi/font": "^7.2.96",
+    "vue": "^3.3.4",
+    "vuetify": "^3.3.9"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^1.0.14",
