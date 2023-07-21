@@ -12,7 +12,7 @@ const text =
 </script>
 
 <template>
-  <v-container fluid style="padding: 0">
+  <v-container style="padding: 0">
     <v-card style="border-radius: 0">
       <v-tabs v-model="tabValue" bg-color="deep-purple-darken-4" center-active>
         <v-tab v-for="(item, key) in menuItems" :key="key" :value="item">{{

@@ -63,4 +63,4 @@ export function StorageGetInitialize(name, value) {
   return item;
 }
 
-export default { storageSet, storageGet };
+export default { storageSet, storageGet, StorageGetInitialize };

@@ -456,12 +456,12 @@ async function start() {
       await mineUpgradeClick("metalStorage", producersEl);
       return;
     }
-    const resCrystalEl = getElId("resources_metal");
+    const resCrystalEl = getElId("resources_crystal");
     if (resCrystalEl.getAttribute("class") === "overmark") {
       await mineUpgradeClick("crystalStorage", producersEl);
       return;
     }
-    const resDeuteriumEl = getElId("resources_metal");
+    const resDeuteriumEl = getElId("resources_deuterium");
     if (resDeuteriumEl.getAttribute("class") === "overmark") {
       await mineUpgradeClick("deuteriumStorage", producersEl);
       return;
