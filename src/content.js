@@ -452,17 +452,17 @@ async function start() {
     }
 
     const resMetalEl = getElId("resources_metal");
-    if (resMetalEl.getAttribute("class").includes("overmark")) {
+    if (resMetalEl.getAttribute("class") === "overmark") {
       await mineUpgradeClick("metalStorage", producersEl);
       return;
     }
     const resCrystalEl = getElId("resources_metal");
-    if (resCrystalEl.getAttribute("class").includes("overmark")) {
+    if (resCrystalEl.getAttribute("class") === "overmark") {
       await mineUpgradeClick("crystalStorage", producersEl);
       return;
     }
     const resDeuteriumEl = getElId("resources_metal");
-    if (resDeuteriumEl.getAttribute("class").includes("overmark")) {
+    if (resDeuteriumEl.getAttribute("class") === "overmark") {
       await mineUpgradeClick("deuteriumStorage", producersEl);
       return;
     }
