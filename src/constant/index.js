@@ -47,14 +47,19 @@ export const initLifeform = {
   lifeformTech11112: 0,
 };
 
-export const initCountdown = {
-  producers: 0,
-  lifeBuilding: 0,
-  facilities: 0,
-};
-
 export const initGameStatus = {
   energyLow: false,
+};
+
+export const initCountdown = {
+  producers: 0,
+  lfbuildings: 0,
+  facilities: 0,
+  research: 0,
+  shipyard: 0,
+  defense: 0,
+  discovery: 0,
+  attack: 0,
 };
 
 const playStatus = {

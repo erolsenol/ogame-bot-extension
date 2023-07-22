@@ -119,17 +119,7 @@ function getProducers() {
   storageSet("producer", producer);
   //   console.log("producer", producer);
 
-  const countDownEl = getElId("countdownbuildingDetails");
-  if (countDownEl) {
-    const endTime = countDownEl.getAttribute("data-end");
-
-    countdown.producers = Number(endTime);
-    storageSet("countdown", countdown);
-  }
-  //   else {
-  //     countdown.producers = 0;
-  //     storageSet("countdown", countdown);
-  //   }
+  setCountdown("producers", "countdownbuildingDetails", producersAreaEl);
 }
 
 //facility
@@ -167,14 +157,8 @@ function getFacilities() {
     facility[facilityName] = Number(level);
   }
   storageSet("facility", facility);
-  //   console.log("facility", facility);
-  const countDownEl = getElId("countdownbuildingDetails");
-  if (countDownEl) {
-    const endTime = countDownEl.getAttribute("data-end");
 
-    countdown.facilities = Number(endTime);
-    storageSet("countdown", countdown);
-  }
+  setCountdown("facilities", "countdownbuildingDetails", facilitiesAreaEl);
 }
 
 //lifeform
@@ -218,17 +202,22 @@ function GetLfBuildings() {
   storageSet("lifeform", lifeform);
   //   console.log("lifeform", lifeform);
 
-  const countDownEl = getElId("countdownlfbuildingDetails");
+  setCountdown("lfbuildings", "countdownlfbuildingDetails", lfbuildingsAreaEl);
+}
+
+function setCountdown(property, countdownName, searchEl = document) {
+  const countDownEl = searchEl.querySelector(`#${countdownName}`);
   if (countDownEl) {
     const endTime = countDownEl.getAttribute("data-end");
 
-    countdown.lifeBuilding = Number(endTime);
+    const countdown = StorageGetInitialize("countdown", initCountdown);
+    countdown[property] = Number(endTime);
     storageSet("countdown", countdown);
+
+    if (["bitti"].includes(countDownEl.innerText)) {
+      location.reload();
+    }
   }
-  //   else {
-  //     countdown.lifeBuilding = 0;
-  //     storageSet("countdown", countdown);
-  //   }
 }
 
 //research
@@ -271,7 +260,8 @@ function getTechnologies() {
     research[researchName.replace("Technology", "")] = Number(level);
   }
   storageSet("research", research);
-  //   console.log("research", research);
+
+  setCountdown("research", "countdownresearchDetails", researchAreaEl);
 }
 
 //overmark
@@ -438,60 +428,132 @@ async function start() {
   const countdown = StorageGetInitialize("countdown", initCountdown);
   const now = mathStabileRound(Date.now() / 1000);
 
+  const gamePlayStatus = StorageGetInitialize(
+    "gamePlayStatus",
+    initGamePlayStatus
+  );
   gamePlayStatus.producers.status = 1;
   console.log("producers time:", countdown.producers - now);
   if (gamePlayStatus.producers.status && countdown.producers < now) {
-    const { metalMine, crystalMine, deuteriumSynthesizer, solarPlant } =
-      storageGet("producer") || {};
+    await standartSuppliesDevelopment();
+  } else if (gamePlayStatus.lfbuildings.status && countdown.lfbuildings < now) {
+    await standartLfbuildingsDevelopment();
+  }
+}
 
-    const producersEl = getElId("producers");
+async function standartSuppliesDevelopment() {
+  const { metalMine, crystalMine, deuteriumSynthesizer, solarPlant } =
+    storageGet("producer") || {};
 
-    if (!producersEl) {
-      await menuClick(1);
-      return;
-    }
+  const producersEl = getElId("producers");
 
-    const resMetalEl = getElId("resources_metal");
-    if (["overmark", "middlemark"].includes(resMetalEl.getAttribute("class"))) {
-      await mineUpgradeClick("metalStorage", producersEl);
-      return;
-    }
-    const resCrystalEl = getElId("resources_crystal");
-    if (
-      ["overmark", "middlemark"].includes(resCrystalEl.getAttribute("class"))
-    ) {
-      await mineUpgradeClick("crystalStorage", producersEl);
-      return;
-    }
-    const resDeuteriumEl = getElId("resources_deuterium");
-    if (
-      ["overmark", "middlemark"].includes(resDeuteriumEl.getAttribute("class"))
-    ) {
-      await mineUpgradeClick("deuteriumStorage", producersEl);
-      return;
-    }
+  if (!producersEl) {
+    await menuClick(1);
+    return;
+  }
 
-    const { energy } = StorageGetInitialize("resource", initResource);
+  const resMetalEl = getElId("resources_metal");
+  if (["overmark", "middlemark"].includes(resMetalEl.getAttribute("class"))) {
+    await mineUpgradeClick("metalStorage", "technologydetails", producersEl);
+    return;
+  }
+  const resCrystalEl = getElId("resources_crystal");
+  if (["overmark", "middlemark"].includes(resCrystalEl.getAttribute("class"))) {
+    await mineUpgradeClick("crystalStorage", "technologydetails", producersEl);
+    return;
+  }
+  const resDeuteriumEl = getElId("resources_deuterium");
+  if (
+    ["overmark", "middlemark"].includes(resDeuteriumEl.getAttribute("class"))
+  ) {
+    await mineUpgradeClick(
+      "deuteriumStorage",
+      "technologydetails",
+      producersEl
+    );
+    return;
+  }
 
-    if (energy < 0) {
-      await mineUpgradeClick("solarPlant", producersEl);
-      return;
-    } else if (metalMine - 2 <= crystalMine) {
-      await mineUpgradeClick("metalMine", producersEl);
+  const { energy } = StorageGetInitialize("resource", initResource);
+
+  if (energy < 0) {
+    await mineUpgradeClick("solarPlant", "technologydetails", producersEl);
+    return;
+  } else if (metalMine - 2 <= crystalMine) {
+    await mineUpgradeClick("metalMine", "technologydetails", producersEl);
+    return;
+  } else {
+    if (crystalMine - 2 <= deuteriumSynthesizer) {
+      await mineUpgradeClick("crystalMine", "technologydetails", producersEl);
       return;
     } else {
-      if (crystalMine - 2 <= deuteriumSynthesizer) {
-        await mineUpgradeClick("crystalMine", producersEl);
-        return;
-      } else {
-        await mineUpgradeClick("deuteriumSynthesizer", producersEl);
-        return;
-      }
+      await mineUpgradeClick(
+        "deuteriumSynthesizer",
+        "technologydetails",
+        producersEl
+      );
+      return;
     }
   }
 }
 
-function mineUpgradeClick(mineName, searchEl = document) {
+async function standartLfbuildingsDevelopment() {
+  const { metalMine, crystalMine, deuteriumSynthesizer, solarPlant } =
+    storageGet("producer") || {};
+
+  const producersEl = getElId("producers");
+
+  if (!producersEl) {
+    await menuClick(1);
+    return;
+  }
+
+  const resMetalEl = getElId("resources_metal");
+  if (["overmark", "middlemark"].includes(resMetalEl.getAttribute("class"))) {
+    await mineUpgradeClick("metalStorage", "technologydetails", producersEl);
+    return;
+  }
+  const resCrystalEl = getElId("resources_crystal");
+  if (["overmark", "middlemark"].includes(resCrystalEl.getAttribute("class"))) {
+    await mineUpgradeClick("crystalStorage", "technologydetails", producersEl);
+    return;
+  }
+  const resDeuteriumEl = getElId("resources_deuterium");
+  if (
+    ["overmark", "middlemark"].includes(resDeuteriumEl.getAttribute("class"))
+  ) {
+    await mineUpgradeClick(
+      "deuteriumStorage",
+      "technologydetails",
+      producersEl
+    );
+    return;
+  }
+
+  const { energy } = StorageGetInitialize("resource", initResource);
+
+  if (energy < 0) {
+    await mineUpgradeClick("solarPlant", "technologydetails", producersEl);
+    return;
+  } else if (metalMine - 2 <= crystalMine) {
+    await mineUpgradeClick("metalMine", "technologydetails", producersEl);
+    return;
+  } else {
+    if (crystalMine - 2 <= deuteriumSynthesizer) {
+      await mineUpgradeClick("crystalMine", "technologydetails", producersEl);
+      return;
+    } else {
+      await mineUpgradeClick(
+        "deuteriumSynthesizer",
+        "technologydetails",
+        producersEl
+      );
+      return;
+    }
+  }
+}
+
+function mineUpgradeClick(mineName, detailName, searchEl = document) {
   return new Promise(async (resolve, reject) => {
     try {
       const mineContainer = searchEl.querySelector(`li[class~="${mineName}"]`);
@@ -502,7 +564,7 @@ function mineUpgradeClick(mineName, searchEl = document) {
           resolve(true);
         }, 2000);
       } else {
-        await mineUpgradeTimeCalculation(mineContainer);
+        await mineUpgradeTimeCalculation(mineContainer, detailName);
         resolve(true);
       }
     } catch (error) {
@@ -511,7 +573,7 @@ function mineUpgradeClick(mineName, searchEl = document) {
   });
 }
 
-function mineUpgradeTimeCalculation(mineEl) {
+function mineUpgradeTimeCalculation(mineEl, detailName) {
   return new Promise(async (resolve, reject) => {
     try {
       if (!mineEl.getAttribute("class").includes("showsDetails")) {
@@ -533,7 +595,7 @@ function mineUpgradeTimeCalculation(mineEl) {
       }
 
       setTimeout(() => {
-        const technologyDetails = getElId("technologydetails");
+        const technologyDetails = getElId(detailName);
         if (!technologyDetails) {
           resolve(true);
           return;
@@ -622,4 +684,6 @@ function menuClick(number, subNumber = 0) {
   });
 }
 
-setInterval(start, 3500);
+const generalIntervalTime = 3500;
+
+setInterval(start, generalIntervalTime);
