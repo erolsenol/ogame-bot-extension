@@ -1,3 +1,4 @@
+import init from "./ui";
 import {
   getElId,
   strToNumber,
@@ -396,6 +397,17 @@ function hasLogin() {
   return true;
 }
 
+function uiInit() {
+  // const ingamepage = getElId("ingamepage");
+  // if (ingamepage) {
+  //   // ingamepage.style.height = "130%";
+  // }
+  const ingamepage = getElId("ingamepage");
+  if (ingamepage) {
+    init(ingamepage);
+  }
+}
+
 function gameInitialize() {
   getResources();
   getProducers();
@@ -424,6 +436,7 @@ async function start() {
   if (!login) return;
 
   gameInitialize();
+  uiInit();
 
   const countdown = StorageGetInitialize("countdown", initCountdown);
   const now = mathStabileRound(Date.now() / 1000);
@@ -432,8 +445,7 @@ async function start() {
     "gamePlayStatus",
     initGamePlayStatus
   );
-  gamePlayStatus.producers.status = 0;
-  console.log("producers time:", countdown.producers - now);
+  console.log("countdown:", countdown);
   if (gamePlayStatus.producers.status && countdown.producers < now) {
     await standartSuppliesDevelopment();
   } else if (gamePlayStatus.lfbuildings.status && countdown.lfbuildings < now) {
