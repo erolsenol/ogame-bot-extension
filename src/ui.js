@@ -27,6 +27,14 @@ const init = (left) => {
   const myCon = getElId("my-container");
   if (myCon) return;
 
+  const leftMenu = getElId("left");
+  let lmRect = {
+    x: 0,
+  };
+  if (leftMenu) {
+    lmRect = leftMenu.getBoundingClientRect();
+  }
+
   let container = document.createElement("div");
   container.setAttribute("id", "my-container");
   container.style.height = "300px";
@@ -34,7 +42,7 @@ const init = (left) => {
   container.style.position = "absolute";
   container.style.border = `solid 1px red`;
   container.style.top = `658px`;
-  container.style.left = `181px`;
+  container.style.left = `${lmRect.x + 0}px`;
   container.style.borderRadius = "10px";
   container.style.paddingTop = "5px";
 
@@ -62,7 +70,6 @@ function initEls(el) {
 
   const divLfbuildings = generateDiv();
   const CbLfbuildings = generateInput("checkbox", "cb-lfbuildings");
-  console.log("gamePlayStatus", gamePlayStatus);
   CbLfbuildings.checked = gamePlayStatus.lfbuildings.status;
   CbLfbuildings.addEventListener("input", function () {
     const gamePlayStatus = StorageGetInitialize(
