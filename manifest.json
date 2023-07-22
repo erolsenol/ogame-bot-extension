@@ -10,10 +10,6 @@
     "background",
     "storage"
   ],
-  "background": {
-    "service_worker": "src/background.js",
-    "type": "module"
-  },
   "action": { "default_popup": "index.html" },
   "content_scripts": [
     {
