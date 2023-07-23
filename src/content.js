@@ -842,6 +842,32 @@ async function hasDevelopmentNeed() {
         return resolve(true);
       }
     } else if (
+      deuteriumSynthesizer > 10 &&
+      roboticsFactory < 5 &&
+      computerTechnology < 5
+    ) {
+      if (roboticsFactory < 5) {
+        await specifiedUpgradeClick(
+          "roboticsFactory",
+          "technologydetails",
+          3,
+          "facilities",
+          getElId("facilities"),
+          "facilities"
+        );
+        return resolve(true);
+      } else if (computerTechnology < 5) {
+        await specifiedUpgradeClick(
+          "computerTechnology",
+          "technologydetails",
+          5,
+          "research",
+          getElId("research"),
+          "research"
+        );
+        return resolve(true);
+      }
+    } else if (
       deuteriumSynthesizer > 13 &&
       researchLaboratory < 6 &&
       shieldingTechnology < 5 &&
@@ -984,7 +1010,7 @@ function specifiedUpgradeTimeCalculation(mineEl, detailName, countdownSetName) {
         const costsArea = technologyDetails.querySelector("div[class='costs']");
         costsArea.querySelectorAll("li").forEach((costItem) => {
           const classText = costItem.getAttribute("class");
-          if (classText.includes("metal")) {
+          if (classText && classText.includes("metal")) {
             const requirement = Number(costItem.getAttribute("data-value"));
             const difference = metal - requirement;
 
@@ -994,7 +1020,7 @@ function specifiedUpgradeTimeCalculation(mineEl, detailName, countdownSetName) {
               );
               remaningTime = productionSecond;
             }
-          } else if (classText.includes("crystal")) {
+          } else if (classText && classText.includes("crystal")) {
             const requirement = Number(costItem.getAttribute("data-value"));
             const difference = crystal - requirement;
             if (difference < 0) {
@@ -1005,7 +1031,7 @@ function specifiedUpgradeTimeCalculation(mineEl, detailName, countdownSetName) {
                 remaningTime = productionSecond;
               }
             }
-          } else if (classText.includes("deuterium")) {
+          } else if (classText && classText.includes("deuterium")) {
             const requirement = Number(costItem.getAttribute("data-value"));
             const difference = deuterium - requirement;
             if (difference < 0) {
@@ -1095,7 +1121,7 @@ function mineUpgradeTimeCalculation(mineEl, detailName) {
         const costsArea = technologyDetails.querySelector("div[class='costs']");
         costsArea.querySelectorAll("li").forEach((costItem) => {
           const classText = costItem.getAttribute("class");
-          if (classText.includes("metal")) {
+          if (classText && classText.includes("metal")) {
             const requirement = Number(costItem.getAttribute("data-value"));
             const difference = metal - requirement;
 
@@ -1105,7 +1131,7 @@ function mineUpgradeTimeCalculation(mineEl, detailName) {
               );
               remaningTime = productionSecond;
             }
-          } else if (classText.includes("crystal")) {
+          } else if (classText && classText.includes("crystal")) {
             const requirement = Number(costItem.getAttribute("data-value"));
             const difference = crystal - requirement;
             if (difference < 0) {
@@ -1116,7 +1142,7 @@ function mineUpgradeTimeCalculation(mineEl, detailName) {
                 remaningTime = productionSecond;
               }
             }
-          } else if (classText.includes("deuterium")) {
+          } else if (classText && classText.includes("deuterium")) {
             const requirement = Number(costItem.getAttribute("data-value"));
             const difference = deuterium - requirement;
             if (difference < 0) {
