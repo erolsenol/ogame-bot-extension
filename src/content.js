@@ -40,6 +40,7 @@ let resourceGeneration = StorageGetInitialize(
 );
 let gamePlayStatus = StorageGetInitialize("gamePlayStatus", initGamePlayStatus);
 let hasDevelopment = StorageGetInitialize("hasDevelopment", false);
+let gameReload = false;
 
 //resource
 //gameStatus.energyLow
@@ -216,7 +217,8 @@ function setCountdown(property, countdownName, searchEl = document) {
     countdown[property] = Number(endTime);
     storageSet("countdown", countdown);
 
-    if (["bitti"].includes(countDownEl.innerText)) {
+    if (["bitti"].includes(countDownEl.innerText) && !gameReload) {
+      gameReload = true;
       location.reload();
     }
   }
@@ -630,6 +632,10 @@ async function hasDevelopmentNeed() {
       impulseDriveTechnology,
       espionageTechnology,
       astrophysicsTechnology,
+      ionTechnology,
+      shieldingTechnology,
+      hyperspaceTechnology,
+      hyperspaceDriveTechnology,
       computerTechnology,
       armorTechnology,
     } = StorageGetInitialize("research", initResearch);
@@ -787,6 +793,113 @@ async function hasDevelopmentNeed() {
         );
         return resolve(true);
       }
+    } else if (
+      deuteriumSynthesizer > 10 &&
+      energyTechnology < 4 &&
+      laserTechnology < 5 &&
+      ionTechnology < 2 &&
+      impulseDriveTechnology < 4
+    ) {
+      if (energyTechnology < 4) {
+        await specifiedUpgradeClick(
+          "energyTechnology",
+          "technologydetails",
+          5,
+          "research",
+          getElId("research"),
+          "research"
+        );
+        return resolve(true);
+      } else if (laserTechnology < 5) {
+        await specifiedUpgradeClick(
+          "laserTechnology",
+          "technologydetails",
+          5,
+          "research",
+          getElId("research"),
+          "research"
+        );
+        return resolve(true);
+      } else if (ionTechnology < 2) {
+        await specifiedUpgradeClick(
+          "ionTechnology",
+          "technologydetails",
+          5,
+          "research",
+          getElId("research"),
+          "research"
+        );
+        return resolve(true);
+      } else if (impulseDriveTechnology < 4) {
+        await specifiedUpgradeClick(
+          "impulseDriveTechnology",
+          "technologydetails",
+          5,
+          "research",
+          getElId("research"),
+          "research"
+        );
+        return resolve(true);
+      }
+    } else if (
+      deuteriumSynthesizer > 13 &&
+      researchLaboratory < 6 &&
+      shieldingTechnology < 5 &&
+      hyperspaceTechnology < 3 &&
+      hyperspaceDriveTechnology < 4 &&
+      shipyard < 7
+    ) {
+      if (researchLaboratory < 6) {
+        await specifiedUpgradeClick(
+          "researchLaboratory",
+          "technologydetails",
+          3,
+          "facilities",
+          getElId("facilities"),
+          "facilities"
+        );
+        return resolve(true);
+      } else if (shieldingTechnology < 5) {
+        await specifiedUpgradeClick(
+          "shieldingTechnology",
+          "technologydetails",
+          5,
+          "research",
+          getElId("research"),
+          "research"
+        );
+        return resolve(true);
+      } else if (hyperspaceTechnology < 3) {
+        await specifiedUpgradeClick(
+          "hyperspaceTechnology",
+          "technologydetails",
+          5,
+          "research",
+          getElId("research"),
+          "research"
+        );
+        return resolve(true);
+      } else if (hyperspaceDriveTechnology < 4) {
+        await specifiedUpgradeClick(
+          "hyperspaceDriveTechnology",
+          "technologydetails",
+          5,
+          "research",
+          getElId("research"),
+          "research"
+        );
+        return resolve(true);
+      } else if (shipyard < 7) {
+        await specifiedUpgradeClick(
+          "shipyard",
+          "technologydetails",
+          3,
+          "facilities",
+          getElId("facilities"),
+          "facilities"
+        );
+        return resolve(true);
+      }
     }
 
     return resolve(false);
@@ -909,7 +1022,8 @@ function specifiedUpgradeTimeCalculation(mineEl, detailName, countdownSetName) {
         const now = mathStabileRound(Date.now() / 1000);
         countdown[countdownSetName] = remaningTime + now;
         storageSet("countdown", countdown);
-        if (!(remaningTime + now > now)) {
+        if (!(remaningTime + now > now) && !gameReload) {
+          gameReload = true;
           location.reload();
         }
         return resolve(true);
@@ -1019,7 +1133,8 @@ function mineUpgradeTimeCalculation(mineEl, detailName) {
         const now = mathStabileRound(Date.now() / 1000);
         countdown.producers = remaningTime + now;
         storageSet("countdown", countdown);
-        if (!(remaningTime + now > now)) {
+        if (!(remaningTime + now > now) && !gameReload) {
+          gameReload = true;
           location.reload();
         }
         resolve(true);
