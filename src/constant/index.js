@@ -61,6 +61,7 @@ export const initCountdown = {
   defense: 0,
   discovery: 0,
   attack: 0,
+  spyGalaxy: 0,
 };
 
 const playStatus = {
@@ -77,6 +78,7 @@ export const initGamePlayStatus = {
   defense: { ...playStatus },
   discovery: { ...playStatus },
   attack: { ...playStatus },
+  spyGalaxy: { ...playStatus },
 };
 
 export const initOvermark = {
@@ -140,4 +142,19 @@ export const initTarget = {
   position: 0,
   system: 0,
   attacked: false,
+};
+
+export const initMyPlanetAttack = {
+  time: 0,
+};
+
+export const initSpyGalaxy = {
+  galaxy: 0,
+  system: 0,
+  position: -1,
+  interval: 30,
+  start: {
+    galaxy: 0,
+    system: 0,
+  },
 };

@@ -1,6 +1,7 @@
 import {
   getElId,
   mathStabileRound,
+  isNumeric,
   storageSet,
   storageGet,
   StorageGetInitialize,
@@ -23,6 +24,10 @@ const gamePlayStatus = StorageGetInitialize(
   "gamePlayStatus",
   initGamePlayStatus
 );
+const messageSetting = StorageGetInitialize(
+  "messageSetting",
+  initMessageSetting
+);
 
 const init = (left) => {
   const myCon = getElId("my-container");
@@ -40,7 +45,7 @@ const init = (left) => {
   let container = document.createElement("div");
   container.setAttribute("id", "my-container");
   container.style.zIndex = "2";
-  container.style.height = "300px";
+  container.style.height = "350px";
   container.style.width = "178px";
   container.style.position = "absolute";
   container.style.border = `solid 1px red`;
@@ -120,6 +125,7 @@ function initEls(el) {
   divSpySettings.style.alignItems = "space-beetwen";
   divSpySettings.style.width = "100%";
   const inputSpyInterval = generateInput("text", "spy-interval");
+  inputSpyInterval.value = StorageGetInitialize("spyGalaxyInterval", "30");
   inputSpyInterval.style.width = "80px";
   const labelSpyInterval = generateLabel("System Interval");
   labelSpyInterval.style.width = "50px";
@@ -143,7 +149,7 @@ function initEls(el) {
 
   const divMessageDefence = generateDiv();
   const CbMessageDefence = generateInput("checkbox", "message-defence");
-  CbMessageDefence.checked = gamePlayStatus.producers.status;
+  CbMessageDefence.checked = messageSetting.delDefence;
   CbMessageDefence.addEventListener("input", function () {
     const messageSetting = StorageGetInitialize(
       "messageSetting",
@@ -168,7 +174,7 @@ function initEls(el) {
 
   const divMessageFleet = generateDiv();
   const CbMessageFleet = generateInput("checkbox", "message-fleet");
-  CbMessageFleet.checked = gamePlayStatus.producers.status;
+  CbMessageFleet.checked = messageSetting.delFleet;
   CbMessageFleet.addEventListener("input", function () {
     const messageSetting = StorageGetInitialize(
       "messageSetting",
@@ -187,6 +193,31 @@ function initEls(el) {
   const labelMessageFleet = generateLabel("Delete With Fleet", "message-fleet");
   divMessageFleet.append(labelMessageFleet);
   divAttackContainer.append(divMessageFleet);
+
+  const divMessageMinRes = generateDiv();
+  divMessageMinRes.style.flexDirection = "row";
+  const inputMessageMinRes = generateInput("text", "min-resource");
+  inputMessageMinRes.value = StorageGetInitialize(
+    "messageMinResource",
+    "20000"
+  );
+  inputMessageMinRes.style.width = "65px";
+  inputMessageMinRes.addEventListener("input", function () {
+    if (!isNumeric(inputMessageMinRes.value)) {
+      inputMessageMinRes.value = StorageGetInitialize(
+        "messageMinResource",
+        "20000"
+      );
+      return;
+    }
+    storageSet("messageMinResource", Number(inputMessageMinRes.value));
+  });
+  const labelMessageMinRes = generateLabel("Min Resource");
+  labelMessageMinRes.style.width = "81px";
+  labelMessageMinRes.style.padding = "0";
+  divMessageMinRes.append(labelMessageMinRes);
+  divMessageMinRes.append(inputMessageMinRes);
+  divAttackContainer.append(divMessageMinRes);
 
   const buttonMessageAttack = generateButton("Message Attack");
   buttonMessageAttack.style.marginTop = "5px";
@@ -207,6 +238,26 @@ function initEls(el) {
     storageSet("gamePlayStatus", gamePlayStatus);
   });
   divAttackContainer.append(buttonMessageAttack);
+
+  const buttonStop = generateButton("Stop");
+  buttonStop.style.marginTop = "5px";
+  buttonStop.style.width = "110px";
+  buttonStop.style.height = "22px";
+  buttonStop.style.border = `solid 2px ${
+    gamePlayStatus.message.status ? "green" : "red"
+  }`;
+  buttonStop.addEventListener("click", function () {
+    const gamePlayStatus = StorageGetInitialize(
+      "gamePlayStatus",
+      initGamePlayStatus
+    );
+    gamePlayStatus.message.status = 0;
+    gamePlayStatus.attack.status = 0;
+    gamePlayStatus.spyGalaxy.status = 0;
+
+    storageSet("gamePlayStatus", gamePlayStatus);
+  });
+  divAttackContainer.append(buttonStop);
 
   el.append(divAttackContainer);
 

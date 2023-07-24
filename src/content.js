@@ -6,6 +6,7 @@ import {
   strToNumber,
   mathStabileRound,
   getRndInteger,
+  isNumeric,
   isArrayEqual,
   storageSet,
   storageGet,
@@ -24,25 +25,35 @@ import {
   initShipyard,
   initGamePlayStatus,
   initTarget,
+  initSpyGalaxy,
+  initMyPlanetAttack,
 } from "./constant";
 
 console.log("content");
 
-let resource = StorageGetInitialize("resource", initResource);
-let producer = StorageGetInitialize("producer", initProducer);
-let facility = StorageGetInitialize("facility", initFacility);
-let lifeform = StorageGetInitialize("lifeform", initLifeform);
-let countdown = StorageGetInitialize("countdown", initCountdown);
+const resource = StorageGetInitialize("resource", initResource);
+const producer = StorageGetInitialize("producer", initProducer);
+const facility = StorageGetInitialize("facility", initFacility);
+const lifeform = StorageGetInitialize("lifeform", initLifeform);
+const countdown = StorageGetInitialize("countdown", initCountdown);
 // let gameStatus = StorageGetInitialize("gameStatus", initGameStatus);
-let overmark = StorageGetInitialize("overmark", initOvermark);
-let research = StorageGetInitialize("research", initResearch);
-let shipyard = StorageGetInitialize("shipyard", initShipyard);
-let resourceGeneration = StorageGetInitialize(
+const overmark = StorageGetInitialize("overmark", initOvermark);
+const research = StorageGetInitialize("research", initResearch);
+const shipyard = StorageGetInitialize("shipyard", initShipyard);
+const myPlanetAttack = StorageGetInitialize(
+  "myPlanetAttack",
+  initMyPlanetAttack
+);
+const resourceGeneration = StorageGetInitialize(
   "resourceGeneration",
   initResource
 );
-let gamePlayStatus = StorageGetInitialize("gamePlayStatus", initGamePlayStatus);
-let hasDevelopment = StorageGetInitialize("hasDevelopment", false);
+const gamePlayStatus = StorageGetInitialize(
+  "gamePlayStatus",
+  initGamePlayStatus
+);
+const spyGalaxy = StorageGetInitialize("spyGalaxy", initSpyGalaxy);
+const hasDevelopment = StorageGetInitialize("hasDevelopment", false);
 let gameReload = false;
 
 //resource
@@ -69,7 +80,7 @@ function getResources() {
   const food = strToNumber(foodEl.innerText);
   const darkmatter = strToNumber(darkmatterEl.innerText);
 
-  resource = {
+  const resource = {
     metal,
     crystal,
     deuterium,
@@ -444,6 +455,10 @@ function hasAttack() {
     if (eventBoxEl) {
       const hostileEl = eventBoxEl.querySelector(".hostile");
       if (hostileEl) {
+        const myPlanetAttack = StorageGetInitialize(
+          "myPlanetAttack",
+          initMyPlanetAttack
+        );
         //attack True
       }
     }
@@ -476,6 +491,8 @@ async function start() {
     await messageClear();
   } else if (gameWayConditionCalc("attack")) {
     await attackTarget();
+  } else if (gameWayConditionCalc("spyGalaxy")) {
+    await spyGalaxyStart();
   }
 }
 
@@ -515,6 +532,147 @@ function gameWayConditionCalc(type) {
   return gamePlayStatus[type].status === 1 && countdown[type] < now;
 }
 
+async function spyGalaxyStart() {
+  const gamePlayStatus = StorageGetInitialize(
+    "gamePlayStatus",
+    initGamePlayStatus
+  );
+
+  const galaxycomponent = getElId("galaxycomponent");
+  if (!galaxycomponent) {
+    await menuClick(9);
+    return;
+  }
+
+  const galaxyRow1 = getElId("galaxyRow1");
+  if (!galaxyRow1) {
+    return;
+  }
+
+  let spyGalaxy = StorageGetInitialize("spyGalaxy", initSpyGalaxy);
+  const spyGalaxyInterval = Number(
+    StorageGetInitialize("spyGalaxyInterval", "30")
+  );
+
+  const galaxy_input = getElId("galaxy_input");
+  const system_input = getElId("system_input");
+
+  if (
+    spyGalaxy.galaxy == 0 &&
+    spyGalaxy.position == -1 &&
+    spyGalaxy.system == 0
+  ) {
+    spyGalaxy.galaxy = Number(galaxy_input.getAttribute("value"));
+    spyGalaxy.system = Number(system_input.getAttribute("value"));
+    spyGalaxy.position = -1;
+    spyGalaxy.start = {
+      galaxy: spyGalaxy.galaxy,
+      system: spyGalaxy.system,
+    };
+    storageSet("spyGalaxy", spyGalaxy);
+  }
+
+  const galaxyContent = getElId("galaxyContent");
+  if (!galaxyContent) {
+    return;
+  }
+
+  if (
+    galaxy_input.getAttribute("value") != spyGalaxy.galaxy ||
+    system_input.getAttribute("value") != spyGalaxy.system
+  ) {
+    if (galaxy_input.getAttribute("value") != spyGalaxy.galaxy) {
+      galaxy_input.value = spyGalaxy.galaxy;
+      galaxy_input.setAttribute("value", spyGalaxy.galaxy);
+    }
+    if (system_input.getAttribute("value") != spyGalaxy.system) {
+      system_input.value = spyGalaxy.system;
+      system_input.setAttribute("value", spyGalaxy.system);
+    }
+    setTimeout(() => {
+      galaxycomponent.querySelector("div[class='btn_blue']").click();
+    }, 500);
+    return;
+  }
+
+  const galaxyRows = [];
+  const galaxyRowEls = galaxyContent.querySelectorAll(
+    "div[class~='galaxyRow']"
+  );
+  galaxyRowEls.forEach((item) => {
+    if ((item.getAttribute("id") || "").includes("galaxyRow")) {
+      galaxyRows.push(item);
+    }
+  });
+
+  for (let index = 0; index < galaxyRows.length; index++) {
+    const row = galaxyRows[index];
+    const rowClass = row.getAttribute("class") || "";
+    const cellAction = row.children[row.children.length - 1];
+    const cellPlayerName = row.children[row.children.length - 3];
+    let spyOn = true;
+    if (
+      !rowClass.includes("empty_filter") &&
+      row.hasAttribute("id") &&
+      cellPlayerName.children.length > 0 &&
+      !cellPlayerName.children[0]
+        ?.getAttribute("class")
+        .includes("honorRank") &&
+      !cellPlayerName.children[0]
+        ?.getAttribute("class")
+        .includes("status_abbr_strong") &&
+      !cellPlayerName.children[0]
+        ?.getAttribute("class")
+        .includes("status_abbr_vacation")
+    ) {
+      if (cellPlayerName.children.length > 1) {
+        let symbols = cellPlayerName.children[1].querySelectorAll("span");
+        symbols.forEach((item) => {
+          if (
+            item.innerText === "k" &&
+            item.innerText === "g" &&
+            item.innerText === "t"
+          ) {
+            spyOn = false;
+          }
+        });
+      }
+      const fleetstatusrow = getElId("fleetstatusrow");
+      if (
+        fleetstatusrow.children.length > 0 &&
+        fleetstatusrow.children[0].getAttribute("class") == "error"
+      ) {
+        spyGalaxy = { ...spyGalaxy, position: spyGalaxy.position - 1 };
+        storageSet("spyGalaxy", spyGalaxy);
+        return;
+      }
+      const spyBtn = cellAction.querySelector("a[class~='espionage']");
+      if (spyBtn && spyGalaxy.position < index && spyOn) {
+        spyBtn.children[0].click();
+        spyGalaxy = { ...spyGalaxy, position: index };
+        storageSet("spyGalaxy", spyGalaxy);
+        return;
+      }
+    }
+  }
+
+  if (spyGalaxy.system + spyGalaxy.interval < spyGalaxy.start.system) {
+    spyGalaxy.start.system = spyGalaxy.system - 1;
+    storageSet("spyGalaxy", spyGalaxy);
+    gamePlayStatus.message.status = 1;
+    gamePlayStatus.spyGalaxy.status = 0;
+    storageSet("gamePlayStatus", gamePlayStatus);
+    console.log("spy over");
+    return;
+  }
+
+  spyGalaxy = { ...spyGalaxy, system: spyGalaxy.system - 1, position: -1 };
+  storageSet("spyGalaxy", spyGalaxy);
+  return;
+}
+
+const spanFleetText = "Filolar:";
+const spanDiscoveryText = "Keşifler:";
 //ship quantities will be taken from the fleet page
 async function attackTarget() {
   const gamePlayStatus = StorageGetInitialize(
@@ -523,11 +681,66 @@ async function attackTarget() {
   );
   const countdown = StorageGetInitialize("countdown", initCountdown);
   const target = StorageGetInitialize("target", initTarget);
+  const now = mathStabileRound(Date.now() / 1000);
 
   const shipsChosen = getElId("shipsChosen");
   if (!shipsChosen) {
     await menuClick(8);
     return;
+  }
+
+  const eventContent = getElId("eventContent");
+  const eventContentTrArr = eventContent.querySelectorAll("tr");
+
+  const slots = document.querySelector(".fleetStatus").querySelector("#slots");
+  if (slots) {
+    const fleetEl = slots.children[0];
+    const discoveryEl = slots.children[1];
+
+    const fleetText = fleetEl.innerText
+      .replaceAll(" ", "")
+      .replace(spanFleetText, "");
+    const discoveryText = discoveryEl.innerText
+      .replaceAll(" ", "")
+      .replace(spanDiscoveryText, "");
+
+    const fleetNumArr = fleetText.split("/");
+    const discoveryNumArr = discoveryText.split("/");
+
+    const currentFleetCount = Number(fleetNumArr[0]);
+    const maxFleetCount = Number(fleetNumArr[1]);
+    const currentDiscoveryCount = Number(discoveryNumArr[0]);
+    const maxDiscoveryCount = Number(discoveryNumArr[1]);
+
+    if (currentFleetCount >= maxFleetCount) {
+      for (let index = 0; index < eventContentTrArr.length; index++) {
+        const eventRow = eventContentTrArr[index];
+
+        if (
+          eventRow.getAttribute("data-mission-type") == "1" &&
+          eventRow.getAttribute("data-return-flight") == "true"
+        ) {
+          const firstFleetReturnTime = Number(
+            eventRow.getAttribute("data-arrival-time")
+          );
+          countdown.message = firstFleetReturnTime + getRndInteger(120, 300);
+          storageSet("countdown", countdown);
+          gamePlayStatus.message.status = 1;
+          gamePlayStatus.attack.status = 0;
+          storageSet("gamePlayStatus", gamePlayStatus);
+          console.log("fleet slot Full");
+          return;
+        }
+      }
+
+      // countdown.message = now + 1200;
+      // storageSet("countdown", countdown);
+      // gamePlayStatus.message.status = 1;
+      // gamePlayStatus.attack.status = 0;
+      // storageSet("gamePlayStatus", gamePlayStatus);
+      console.log("Fleet Full");
+      return;
+    }
   }
 
   const fleet1 = getElId("fleet1");
@@ -544,9 +757,8 @@ async function attackTarget() {
     const tpSmallCount = Number(
       transporterSmall.children[0].children[0].children[0].innerText
     );
-    console.log("tpSmallCount", tpSmallCount);
+
     if (tpSmallCount < totalTSmall) {
-      const now = mathStabileRound(Date.now() / 1000);
       countdown.message = now + 1200;
       storageSet("countdown", countdown);
       gamePlayStatus.message.status = 1;
@@ -555,32 +767,25 @@ async function attackTarget() {
       console.log("Not Found Ship");
       return;
     }
-
-    // const qTransporter = $("li").hasClass("transporterSmall");
-    // console.log("qTransporter", qTransporter);
-    // $("li").hasClass("transporterSmall").keydown();
-
-    $('input[name="transporterSmall"]').keyup();
-
-    let keyupEvent = new Event("keyup");
-
-    transporterSmall.querySelector("input").dispatchEvent(keyupEvent);
+    if (transporterSmall.querySelector("input").value == totalTSmall) {
+      console.log("alredy");
+      return;
+    }
     transporterSmall.querySelector("input").value = totalTSmall;
-    const battleships = getElId("battleships");
-    battleships.click();
-
-    console.log("Set input");
+    return;
   }
 
   const fleet2 = getElId("fleet2");
-  if ((fleet2.getAttribute("style") || "").includes("none")) {
+  if ((fleet2.getAttribute("style") || "").includes("none") && false) {
     const continueToFleet2 = getElId("continueToFleet2");
     setTimeout(() => {
       continueToFleet2.children[0].click();
     }, 500);
     console.log("first click");
     return;
-  } else {
+  }
+  // if (false)
+  else {
     const sendFleet = getElId("sendFleet");
     sendFleet.children[0].click();
     target.attacked = true;
@@ -637,10 +842,23 @@ async function messageClear() {
     storageSet("gamePlayStatus", gamePlayStatus);
   }
 
+  const errorBoxDecision = getElId("errorBoxDecision");
+  if (errorBoxDecision) {
+    const errorBoxDecisionNo = errorBoxDecision.querySelector(
+      "#errorBoxDecisionNo"
+    );
+    errorBoxDecisionNo.click();
+    return;
+  }
+
   let biggestResource = 0;
   for (let index = 0; index < messageEls.length; index++) {
     const messageEl = messageEls[index];
     const messageContent = messageEl.querySelector(".msg_content");
+    if (messageContent.children.length < 9) {
+      messageEl.querySelector(".fright").querySelector("a").children[0].click();
+      return;
+    }
     if (messageContent.children.length > 8) {
       if (messageContent.children[8].children.length < 2) {
         //delete
@@ -657,7 +875,7 @@ async function messageClear() {
           .replaceAll(".", "")
       );
       const msgDefencePoint = Number(
-        messageContent.children[8].children[0].innerText
+        messageContent.children[8].children[1].innerText
           .replace(mInfoDefenceText, "")
           .replaceAll(".", "")
       );
@@ -675,6 +893,17 @@ async function messageClear() {
           .replace(mInfoResourceText, "")
           .replaceAll(".", "")
       );
+      const messageMinResource = StorageGetInitialize(
+        "messageMinResource",
+        "20000"
+      );
+      if (messageMinResource > msgTotalResource) {
+        messageEl
+          .querySelector(".fright")
+          .querySelector("a")
+          .children[0].click();
+        return;
+      }
       if (target.resource === msgTotalResource && target.attacked) {
         messageEl
           .querySelector(".fright")
@@ -723,7 +952,14 @@ async function messageClear() {
     }
   }
 
+  const spyGalaxyInterval = getElId("spy-interval");
+  if (!spyGalaxyInterval || !isNumeric(spyGalaxyInterval)) {
+    spyGalaxyInterval.value = "30";
+    storageSet("spyGalaxyInterval", "30", 99900000);
+  }
+
   gamePlayStatus.message.status = 0;
+  gamePlayStatus.spyGalaxy.status = 1;
   storageSet("gamePlayStatus", gamePlayStatus);
   console.log("over");
 }
@@ -1422,6 +1658,6 @@ function menuClick(number, subNumber = 0) {
   });
 }
 
-const generalIntervalTime = 3500;
+const generalIntervalTime = 3000;
 
 setInterval(start, generalIntervalTime);
