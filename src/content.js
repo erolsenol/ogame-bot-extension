@@ -1,8 +1,12 @@
+import qs from "qs";
+import $ from "jquery";
+import init from "./ui";
 import {
   getElId,
   strToNumber,
   mathStabileRound,
   getRndInteger,
+  isNumeric,
   isArrayEqual,
   storageSet,
   storageGet,
@@ -15,29 +19,42 @@ import {
   initFacility,
   initLifeform,
   initCountdown,
-  initGameStatus,
+  // initGameStatus,
   initOvermark,
   initResearch,
   initShipyard,
   initGamePlayStatus,
+  initTarget,
+  initSpyGalaxy,
+  initMyPlanetAttack,
 } from "./constant";
 
 console.log("content");
 
-let resource = StorageGetInitialize("resource", initResource);
-let producer = StorageGetInitialize("producer", initProducer);
-let facility = StorageGetInitialize("facility", initFacility);
-let lifeform = StorageGetInitialize("lifeform", initLifeform);
-let countdown = StorageGetInitialize("countdown", initCountdown);
-let gameStatus = StorageGetInitialize("gameStatus", initGameStatus);
-let overmark = StorageGetInitialize("overmark", initOvermark);
-let research = StorageGetInitialize("research", initResearch);
-let shipyard = StorageGetInitialize("shipyard", initShipyard);
-let resourceGeneration = StorageGetInitialize(
+const resource = StorageGetInitialize("resource", initResource);
+const producer = StorageGetInitialize("producer", initProducer);
+const facility = StorageGetInitialize("facility", initFacility);
+const lifeform = StorageGetInitialize("lifeform", initLifeform);
+const countdown = StorageGetInitialize("countdown", initCountdown);
+// let gameStatus = StorageGetInitialize("gameStatus", initGameStatus);
+const overmark = StorageGetInitialize("overmark", initOvermark);
+const research = StorageGetInitialize("research", initResearch);
+const shipyard = StorageGetInitialize("shipyard", initShipyard);
+const myPlanetAttack = StorageGetInitialize(
+  "myPlanetAttack",
+  initMyPlanetAttack
+);
+const resourceGeneration = StorageGetInitialize(
   "resourceGeneration",
   initResource
 );
-let gamePlayStatus = StorageGetInitialize("gamePlayStatus", initGamePlayStatus);
+const gamePlayStatus = StorageGetInitialize(
+  "gamePlayStatus",
+  initGamePlayStatus
+);
+const spyGalaxy = StorageGetInitialize("spyGalaxy", initSpyGalaxy);
+const hasDevelopment = StorageGetInitialize("hasDevelopment", false);
+let gameReload = false;
 
 //resource
 //gameStatus.energyLow
@@ -63,7 +80,7 @@ function getResources() {
   const food = strToNumber(foodEl.innerText);
   const darkmatter = strToNumber(darkmatterEl.innerText);
 
-  resource = {
+  const resource = {
     metal,
     crystal,
     deuterium,
@@ -73,10 +90,10 @@ function getResources() {
     darkmatter,
   };
 
-  gameStatus.energyLow = energy < 0;
+  // gameStatus.energyLow = energy < 0;
 
   storageSet("resource", resource);
-  storageSet("gameStatus", gameStatus);
+  // storageSet("gameStatus", gameStatus);
   //   console.log("resource", resource);
 }
 
@@ -214,7 +231,8 @@ function setCountdown(property, countdownName, searchEl = document) {
     countdown[property] = Number(endTime);
     storageSet("countdown", countdown);
 
-    if (["bitti"].includes(countDownEl.innerText)) {
+    if (["bitti"].includes(countDownEl.innerText) && !gameReload) {
+      gameReload = true;
       location.reload();
     }
   }
@@ -257,7 +275,7 @@ function getTechnologies() {
 
     const level = researchLevelEl.getAttribute("data-value");
 
-    research[researchName.replace("Technology", "")] = Number(level);
+    research[researchName] = Number(level);
   }
   storageSet("research", research);
 
@@ -396,6 +414,26 @@ function hasLogin() {
   return true;
 }
 
+function updateCountdown() {
+  const now = mathStabileRound(Date.now() / 1000);
+  const countdown = StorageGetInitialize("countdown", initCountdown);
+  const keys = Object.keys(countdown);
+  keys.forEach((key) => {
+    if (countdown[key] < now) {
+      countdown[key] = 0;
+    }
+  });
+  storageSet("countdown", countdown);
+}
+updateCountdown();
+
+function uiInit() {
+  if (getElId("resources_darkmatter")) {
+    init(document.querySelector("body"));
+  }
+}
+setTimeout(uiInit, 1000);
+
 function gameInitialize() {
   getResources();
   getProducers();
@@ -405,6 +443,26 @@ function gameInitialize() {
   getShipyard();
   updateOvermark();
   getResourceGeneration();
+}
+
+async function planetInitialize() {}
+
+//attack
+function hasAttack() {
+  const attackEl = getElId("attack_alert");
+  if (attackEl) {
+    const eventBoxEl = getElId("eventboxFilled");
+    if (eventBoxEl) {
+      const hostileEl = eventBoxEl.querySelector(".hostile");
+      if (hostileEl) {
+        const myPlanetAttack = StorageGetInitialize(
+          "myPlanetAttack",
+          initMyPlanetAttack
+        );
+        //attack True
+      }
+    }
+  }
 }
 
 async function start() {
@@ -425,20 +483,485 @@ async function start() {
 
   gameInitialize();
 
-  const countdown = StorageGetInitialize("countdown", initCountdown);
-  const now = mathStabileRound(Date.now() / 1000);
+  if (gameWayConditionCalc("standartDevelop")) {
+    await standartSuppliesDevelopment();
+  } else if (gameWayConditionCalc("lfbuildings")) {
+    await standartLfbuildingsDevelopment();
+  } else if (gameWayConditionCalc("message")) {
+    await messageClear();
+  } else if (gameWayConditionCalc("attack")) {
+    await attackTarget();
+  } else if (gameWayConditionCalc("spyGalaxy")) {
+    await spyGalaxyStart();
+  }
+}
 
+function gameWayConditionCalc(type) {
+  if (!type) return false;
   const gamePlayStatus = StorageGetInitialize(
     "gamePlayStatus",
     initGamePlayStatus
   );
-  gamePlayStatus.producers.status = 0;
-  console.log("producers time:", countdown.producers - now);
-  if (gamePlayStatus.producers.status && countdown.producers < now) {
-    await standartSuppliesDevelopment();
-  } else if (gamePlayStatus.lfbuildings.status && countdown.lfbuildings < now) {
-    await standartLfbuildingsDevelopment();
+  const now = mathStabileRound(Date.now() / 1000);
+  const countdown = StorageGetInitialize("countdown", initCountdown);
+
+  const keys = Object.keys(countdown);
+  let time = 0;
+  keys.forEach((item) => {
+    if (countdown[item] - now > time) {
+      time = now - countdown[item];
+    }
+  });
+
+  if (time > 0) console.log("time", time);
+
+  if (type === "standartDevelop") {
+    let remaningTime = 0;
+    if (hasDevelopment) {
+      const keys = Object.keys(countdown);
+      keys.forEach((key) => {
+        if (countdown[key] > 0 && countdown[key] > remaningTime) {
+          remaningTime = countdown[key];
+        }
+      });
+      return gamePlayStatus.producers.status && remaningTime < now;
+    }
+    return gamePlayStatus.producers.status && countdown.producers < now;
   }
+
+  return gamePlayStatus[type].status === 1 && countdown[type] < now;
+}
+
+async function spyGalaxyStart() {
+  const gamePlayStatus = StorageGetInitialize(
+    "gamePlayStatus",
+    initGamePlayStatus
+  );
+
+  const galaxycomponent = getElId("galaxycomponent");
+  if (!galaxycomponent) {
+    await menuClick(9);
+    return;
+  }
+
+  const galaxyRow1 = getElId("galaxyRow1");
+  if (!galaxyRow1) {
+    return;
+  }
+
+  let spyGalaxy = StorageGetInitialize("spyGalaxy", initSpyGalaxy);
+  const spyGalaxyInterval = Number(
+    StorageGetInitialize("spyGalaxyInterval", "30")
+  );
+
+  const galaxy_input = getElId("galaxy_input");
+  const system_input = getElId("system_input");
+
+  if (
+    spyGalaxy.galaxy == 0 &&
+    spyGalaxy.position == -1 &&
+    spyGalaxy.system == 0
+  ) {
+    spyGalaxy.galaxy = Number(galaxy_input.getAttribute("value"));
+    spyGalaxy.system = Number(system_input.getAttribute("value"));
+    spyGalaxy.position = -1;
+    spyGalaxy.start = {
+      galaxy: spyGalaxy.galaxy,
+      system: spyGalaxy.system,
+    };
+    storageSet("spyGalaxy", spyGalaxy);
+  }
+
+  const galaxyContent = getElId("galaxyContent");
+  if (!galaxyContent) {
+    return;
+  }
+
+  if (
+    galaxy_input.getAttribute("value") != spyGalaxy.galaxy ||
+    system_input.getAttribute("value") != spyGalaxy.system
+  ) {
+    if (galaxy_input.getAttribute("value") != spyGalaxy.galaxy) {
+      galaxy_input.value = spyGalaxy.galaxy;
+      galaxy_input.setAttribute("value", spyGalaxy.galaxy);
+    }
+    if (system_input.getAttribute("value") != spyGalaxy.system) {
+      system_input.value = spyGalaxy.system;
+      system_input.setAttribute("value", spyGalaxy.system);
+    }
+    setTimeout(() => {
+      galaxycomponent.querySelector("div[class='btn_blue']").click();
+    }, 500);
+    return;
+  }
+
+  const galaxyRows = [];
+  const galaxyRowEls = galaxyContent.querySelectorAll(
+    "div[class~='galaxyRow']"
+  );
+  galaxyRowEls.forEach((item) => {
+    if ((item.getAttribute("id") || "").includes("galaxyRow")) {
+      galaxyRows.push(item);
+    }
+  });
+
+  for (let index = 0; index < galaxyRows.length; index++) {
+    const row = galaxyRows[index];
+    const rowClass = row.getAttribute("class") || "";
+    const cellAction = row.children[row.children.length - 1];
+    const cellPlayerName = row.children[row.children.length - 3];
+    let spyOn = true;
+    if (
+      !rowClass.includes("empty_filter") &&
+      row.hasAttribute("id") &&
+      cellPlayerName.children.length > 0 &&
+      !cellPlayerName.children[0]
+        ?.getAttribute("class")
+        .includes("honorRank") &&
+      !cellPlayerName.children[0]
+        ?.getAttribute("class")
+        .includes("status_abbr_strong") &&
+      !cellPlayerName.children[0]
+        ?.getAttribute("class")
+        .includes("status_abbr_vacation")
+    ) {
+      if (cellPlayerName.children.length > 1) {
+        let symbols = cellPlayerName.children[1].querySelectorAll("span");
+        symbols.forEach((item) => {
+          if (
+            item.innerText === "k" &&
+            item.innerText === "g" &&
+            item.innerText === "t"
+          ) {
+            spyOn = false;
+          }
+        });
+      }
+      const fleetstatusrow = getElId("fleetstatusrow");
+      if (
+        fleetstatusrow.children.length > 0 &&
+        fleetstatusrow.children[0].getAttribute("class") == "error"
+      ) {
+        spyGalaxy = { ...spyGalaxy, position: spyGalaxy.position - 1 };
+        storageSet("spyGalaxy", spyGalaxy);
+        return;
+      }
+      const spyBtn = cellAction.querySelector("a[class~='espionage']");
+      if (spyBtn && spyGalaxy.position < index && spyOn) {
+        spyBtn.children[0].click();
+        spyGalaxy = { ...spyGalaxy, position: index };
+        storageSet("spyGalaxy", spyGalaxy);
+        return;
+      }
+    }
+  }
+
+  if (spyGalaxy.system + spyGalaxy.interval < spyGalaxy.start.system) {
+    spyGalaxy.start.system = spyGalaxy.system - 1;
+    storageSet("spyGalaxy", spyGalaxy);
+    gamePlayStatus.message.status = 1;
+    gamePlayStatus.spyGalaxy.status = 0;
+    storageSet("gamePlayStatus", gamePlayStatus);
+    console.log("spy over");
+    return;
+  }
+
+  spyGalaxy = { ...spyGalaxy, system: spyGalaxy.system - 1, position: -1 };
+  storageSet("spyGalaxy", spyGalaxy);
+  return;
+}
+
+const spanFleetText = "Filolar:";
+const spanDiscoveryText = "Keşifler:";
+//ship quantities will be taken from the fleet page
+async function attackTarget() {
+  const gamePlayStatus = StorageGetInitialize(
+    "gamePlayStatus",
+    initGamePlayStatus
+  );
+  const countdown = StorageGetInitialize("countdown", initCountdown);
+  const target = StorageGetInitialize("target", initTarget);
+  const now = mathStabileRound(Date.now() / 1000);
+
+  const shipsChosen = getElId("shipsChosen");
+  if (!shipsChosen) {
+    await menuClick(8);
+    return;
+  }
+
+  const eventContent = getElId("eventContent");
+  const eventContentTrArr = eventContent.querySelectorAll("tr");
+
+  const slots = document.querySelector(".fleetStatus").querySelector("#slots");
+  if (slots) {
+    const fleetEl = slots.children[0];
+    const discoveryEl = slots.children[1];
+
+    const fleetText = fleetEl.innerText
+      .replaceAll(" ", "")
+      .replace(spanFleetText, "");
+    const discoveryText = discoveryEl.innerText
+      .replaceAll(" ", "")
+      .replace(spanDiscoveryText, "");
+
+    const fleetNumArr = fleetText.split("/");
+    const discoveryNumArr = discoveryText.split("/");
+
+    const currentFleetCount = Number(fleetNumArr[0]);
+    const maxFleetCount = Number(fleetNumArr[1]);
+    const currentDiscoveryCount = Number(discoveryNumArr[0]);
+    const maxDiscoveryCount = Number(discoveryNumArr[1]);
+
+    if (currentFleetCount >= maxFleetCount) {
+      for (let index = 0; index < eventContentTrArr.length; index++) {
+        const eventRow = eventContentTrArr[index];
+
+        if (
+          eventRow.getAttribute("data-mission-type") == "1" &&
+          eventRow.getAttribute("data-return-flight") == "true"
+        ) {
+          const firstFleetReturnTime = Number(
+            eventRow.getAttribute("data-arrival-time")
+          );
+          countdown.message = firstFleetReturnTime + getRndInteger(120, 300);
+          storageSet("countdown", countdown);
+          gamePlayStatus.message.status = 1;
+          gamePlayStatus.attack.status = 0;
+          storageSet("gamePlayStatus", gamePlayStatus);
+          console.log("fleet slot Full");
+          return;
+        }
+      }
+
+      // countdown.message = now + 1200;
+      // storageSet("countdown", countdown);
+      // gamePlayStatus.message.status = 1;
+      // gamePlayStatus.attack.status = 0;
+      // storageSet("gamePlayStatus", gamePlayStatus);
+      console.log("Fleet Full");
+      return;
+    }
+  }
+
+  const fleet1 = getElId("fleet1");
+  if (!(fleet1.getAttribute("style") || "").includes("none")) {
+    const transporterSmall = shipsChosen.querySelector(
+      "li[class~='transporterSmall']"
+    );
+    const avaibleResource = (target.resource / 100) * target.lootRate;
+    const transporterSmallCapacity = 5000 * 1.25;
+    const totalTSmall = mathStabileRound(
+      avaibleResource / transporterSmallCapacity
+    );
+
+    const tpSmallCount = Number(
+      transporterSmall.children[0].children[0].children[0].innerText
+    );
+
+    if (tpSmallCount < totalTSmall) {
+      countdown.message = now + 1200;
+      storageSet("countdown", countdown);
+      gamePlayStatus.message.status = 1;
+      gamePlayStatus.attack.status = 0;
+      storageSet("gamePlayStatus", gamePlayStatus);
+      console.log("Not Found Ship");
+      return;
+    }
+    if (transporterSmall.querySelector("input").value == totalTSmall) {
+      console.log("alredy");
+      return;
+    }
+    transporterSmall.querySelector("input").value = totalTSmall;
+    return;
+  }
+
+  const fleet2 = getElId("fleet2");
+  if ((fleet2.getAttribute("style") || "").includes("none") && false) {
+    const continueToFleet2 = getElId("continueToFleet2");
+    setTimeout(() => {
+      continueToFleet2.children[0].click();
+    }, 500);
+    console.log("first click");
+    return;
+  }
+  // if (false)
+  else {
+    const sendFleet = getElId("sendFleet");
+    sendFleet.children[0].click();
+    target.attacked = true;
+    storageSet("target", target);
+    gamePlayStatus.message.status = 1;
+    gamePlayStatus.attack.status = 0;
+    storageSet("gamePlayStatus", gamePlayStatus);
+    console.log("second click");
+    return;
+  }
+}
+
+const mInfoFleetText = "Filolar: ";
+const mInfoDefenceText = "Savunma: ";
+const mInfoResourceText = "Kaynaklar: ";
+const mInfoLootText = "Ganimet: ";
+async function messageClear() {
+  const gamePlayStatus = StorageGetInitialize(
+    "gamePlayStatus",
+    initGamePlayStatus
+  );
+  const target = StorageGetInitialize("target", initTarget);
+
+  const messageFleetTabEl = getElId("tabs-nfFleets");
+  if (!messageFleetTabEl) {
+    const messageWrapperEl = getElId("message-wrapper");
+    if (messageWrapperEl) {
+      messageWrapperEl.children[0].click();
+      return;
+    }
+  }
+
+  if (!messageFleetTabEl.getAttribute("class").includes("ui-tabs-active")) {
+    messageFleetTabEl.children[0].click();
+  }
+
+  const spyTabEl = getElId("subtabs-nfFleet20");
+  if (!spyTabEl) {
+    return;
+  }
+
+  if (!spyTabEl.getAttribute("class").includes("ui-tabs-active")) {
+    spyTabEl.children[0].click();
+  }
+
+  const fleetsgenericpage = getElId("fleetsgenericpage");
+  if (!fleetsgenericpage) {
+    return;
+  }
+
+  const messageEls = fleetsgenericpage.querySelectorAll("li[class~='msg']");
+  if (messageEls.length < 1) {
+    gamePlayStatus.message.status = 0;
+    storageSet("gamePlayStatus", gamePlayStatus);
+  }
+
+  const errorBoxDecision = getElId("errorBoxDecision");
+  if (errorBoxDecision) {
+    const errorBoxDecisionNo = errorBoxDecision.querySelector(
+      "#errorBoxDecisionNo"
+    );
+    errorBoxDecisionNo.click();
+    return;
+  }
+
+  let biggestResource = 0;
+  for (let index = 0; index < messageEls.length; index++) {
+    const messageEl = messageEls[index];
+    const messageContent = messageEl.querySelector(".msg_content");
+    if (messageContent.children.length < 9) {
+      messageEl.querySelector(".fright").querySelector("a").children[0].click();
+      return;
+    }
+    if (messageContent.children.length > 8) {
+      if (messageContent.children[8].children.length < 2) {
+        //delete
+        messageEl
+          .querySelector(".fright")
+          .querySelector("a")
+          .children[0].click();
+        return;
+      }
+
+      const msgFleetPoint = Number(
+        messageContent.children[8].children[0].innerText
+          .replace(mInfoFleetText, "")
+          .replaceAll(".", "")
+      );
+      const msgDefencePoint = Number(
+        messageContent.children[8].children[1].innerText
+          .replace(mInfoDefenceText, "")
+          .replaceAll(".", "")
+      );
+
+      if (msgFleetPoint > 0 || msgDefencePoint > 0) {
+        messageEl
+          .querySelector(".fright")
+          .querySelector("a")
+          .children[0].click();
+        return;
+      }
+
+      const msgTotalResource = Number(
+        messageContent.children[6].children[1].innerText
+          .replace(mInfoResourceText, "")
+          .replaceAll(".", "")
+      );
+      const messageMinResource = StorageGetInitialize(
+        "messageMinResource",
+        "20000"
+      );
+      if (messageMinResource > msgTotalResource) {
+        messageEl
+          .querySelector(".fright")
+          .querySelector("a")
+          .children[0].click();
+        return;
+      }
+      if (target.resource === msgTotalResource && target.attacked) {
+        messageEl
+          .querySelector(".fright")
+          .querySelector("a")
+          .children[0].click();
+        storageSet("target", initTarget);
+        return;
+      }
+      if (msgTotalResource > biggestResource) {
+        biggestResource = msgTotalResource;
+      }
+    }
+  }
+
+  for (let index = 0; index < messageEls.length; index++) {
+    const messageEl = messageEls[index];
+    const messageContent = messageEl.querySelector(".msg_content");
+    if (messageContent.children.length > 8) {
+      const msgTotalResource = Number(
+        messageContent.children[6].children[1].innerText
+          .replace(mInfoResourceText, "")
+          .replaceAll(".", "")
+      );
+      if (biggestResource === msgTotalResource) {
+        const targetGalaxyInfo = qs.parse(
+          messageEl.querySelector("a").getAttribute("href")
+        );
+        const lootRate = Number(
+          messageContent.children[7].children[0].innerText
+            .replace(mInfoLootText, "")
+            .replace("%", "")
+        );
+        storageSet("target", {
+          lootRate,
+          resource: msgTotalResource,
+          galaxy: targetGalaxyInfo.galaxy,
+          position: targetGalaxyInfo.position,
+          system: targetGalaxyInfo.system,
+        });
+        messageEl.querySelector("span[class~='icon_attack']").click();
+        gamePlayStatus.message.status = 0;
+        gamePlayStatus.attack.status = 1;
+        storageSet("gamePlayStatus", gamePlayStatus);
+        return;
+      }
+    }
+  }
+
+  const spyGalaxyInterval = getElId("spy-interval");
+  if (!spyGalaxyInterval || !isNumeric(spyGalaxyInterval)) {
+    spyGalaxyInterval.value = "30";
+    storageSet("spyGalaxyInterval", "30", 99900000);
+  }
+
+  gamePlayStatus.message.status = 0;
+  gamePlayStatus.spyGalaxy.status = 1;
+  storageSet("gamePlayStatus", gamePlayStatus);
+  console.log("over");
 }
 
 async function standartSuppliesDevelopment() {
@@ -447,39 +970,62 @@ async function standartSuppliesDevelopment() {
 
   const producersEl = getElId("producers");
 
-  if (!producersEl) {
+  if (metalMine === 0) {
     await menuClick(1);
     return;
   }
 
-  const resMetalEl = getElId("resources_metal");
-  if (["overmark", "middlemark"].includes(resMetalEl.getAttribute("class"))) {
-    await mineUpgradeClick("metalStorage", "technologydetails", producersEl);
+  if (!producersEl && !hasDevelopment) {
+    await menuClick(1);
     return;
   }
-  const resCrystalEl = getElId("resources_crystal");
-  if (["overmark", "middlemark"].includes(resCrystalEl.getAttribute("class"))) {
-    await mineUpgradeClick("crystalStorage", "technologydetails", producersEl);
-    return;
-  }
-  const resDeuteriumEl = getElId("resources_deuterium");
-  if (
-    ["overmark", "middlemark"].includes(resDeuteriumEl.getAttribute("class"))
-  ) {
-    await mineUpgradeClick(
-      "deuteriumStorage",
-      "technologydetails",
-      producersEl
-    );
-    return;
+
+  if (!hasDevelopment) {
+    const resMetalEl = getElId("resources_metal");
+    if (["overmark", "middlemark"].includes(resMetalEl.getAttribute("class"))) {
+      await mineUpgradeClick("metalStorage", "technologydetails", producersEl);
+      return;
+    }
+    const resCrystalEl = getElId("resources_crystal");
+    if (
+      ["overmark", "middlemark"].includes(resCrystalEl.getAttribute("class"))
+    ) {
+      await mineUpgradeClick(
+        "crystalStorage",
+        "technologydetails",
+        producersEl
+      );
+      return;
+    }
+    const resDeuteriumEl = getElId("resources_deuterium");
+    if (
+      ["overmark", "middlemark"].includes(resDeuteriumEl.getAttribute("class"))
+    ) {
+      await mineUpgradeClick(
+        "deuteriumStorage",
+        "technologydetails",
+        producersEl
+      );
+      return;
+    }
   }
 
   const { energy } = StorageGetInitialize("resource", initResource);
-
   if (energy < 0) {
     await mineUpgradeClick("solarPlant", "technologydetails", producersEl);
     return;
-  } else if (metalMine - 2 <= crystalMine) {
+  }
+
+  if (await hasDevelopmentNeed()) {
+    hasDevelopment = true;
+    storageSet("hasDevelopment", true);
+    await hasDevelopmentNeed();
+    return;
+  }
+  hasDevelopment = false;
+  storageSet("hasDevelopment", false);
+
+  if (metalMine - 2 <= crystalMine) {
     await mineUpgradeClick("metalMine", "technologydetails", producersEl);
     return;
   } else {
@@ -498,67 +1044,40 @@ async function standartSuppliesDevelopment() {
 }
 
 async function standartLfbuildingsDevelopment() {
-  const { metalMine, crystalMine, deuteriumSynthesizer, solarPlant } =
-    storageGet("producer") || {};
-
   const { lifeformTech11101, lifeformTech11102, lifeformTech11103 } =
-    storageGet("lifeform", initLifeform) || {};
+    storageGet("lifeform") || {};
 
-  const producersEl = getElId("producers");
+  const lfbuildingsEl = getElId("lfbuildings");
 
-  if (!producersEl) {
-    await menuClick(1);
+  if (!lfbuildingsEl) {
+    await menuClick(2);
     return;
   }
 
-  const resMetalEl = getElId("resources_metal");
-  if (["overmark", "middlemark"].includes(resMetalEl.getAttribute("class"))) {
-    await mineUpgradeClick("metalStorage", "technologydetails", producersEl);
-    return;
-  }
-  const resCrystalEl = getElId("resources_crystal");
-  if (["overmark", "middlemark"].includes(resCrystalEl.getAttribute("class"))) {
-    await mineUpgradeClick("crystalStorage", "technologydetails", producersEl);
-    return;
-  }
-  const resDeuteriumEl = getElId("resources_deuterium");
-  if (
-    ["overmark", "middlemark"].includes(resDeuteriumEl.getAttribute("class"))
-  ) {
-    await mineUpgradeClick(
-      "deuteriumStorage",
-      "technologydetails",
-      producersEl
-    );
-    return;
-  }
-
-  if (await hasDevelopmentNeed()) {
-    await hasDevelopmentNeed();
-    return;
-  }
-
-  const { energy } = StorageGetInitialize("resource", initResource);
-
-  if (energy < 0) {
-    await mineUpgradeClick("solarPlant", "technologydetails", producersEl);
-    return;
-  } else if (metalMine - 2 <= crystalMine) {
-    await mineUpgradeClick("metalMine", "technologydetails", producersEl);
-    return;
-  } else {
-    if (crystalMine - 2 <= deuteriumSynthesizer) {
-      await mineUpgradeClick("crystalMine", "technologydetails", producersEl);
+  if (lifeformTech11101 < 21 || lifeformTech11102 < 22) {
+    if (lifeformTech11101 - 1 <= lifeformTech11102) {
+      await specifiedUpgradeClick(
+        "lifeformTech11101",
+        "technologydetails",
+        2,
+        "lfbuildings",
+        getElId("lfbuildings"),
+        "lfbuildings"
+      );
       return;
     } else {
-      await mineUpgradeClick(
-        "deuteriumSynthesizer",
+      await specifiedUpgradeClick(
+        "lifeformTech11102",
         "technologydetails",
-        producersEl
+        2,
+        "lfbuildings",
+        getElId("lfbuildings"),
+        "lfbuildings"
       );
       return;
     }
   }
+  return true;
 }
 
 async function hasDevelopmentNeed() {
@@ -578,6 +1097,11 @@ async function hasDevelopmentNeed() {
       combustionDriveTechnology,
       impulseDriveTechnology,
       espionageTechnology,
+      astrophysicsTechnology,
+      ionTechnology,
+      shieldingTechnology,
+      hyperspaceTechnology,
+      hyperspaceDriveTechnology,
       computerTechnology,
       armorTechnology,
     } = StorageGetInitialize("research", initResearch);
@@ -709,6 +1233,165 @@ async function hasDevelopmentNeed() {
         );
         return resolve(true);
       }
+    } else if (
+      deuteriumSynthesizer > 9 &&
+      espionageTechnology < 4 &&
+      astrophysicsTechnology < 1
+    ) {
+      if (espionageTechnology < 4) {
+        await specifiedUpgradeClick(
+          "espionageTechnology",
+          "technologydetails",
+          5,
+          "research",
+          getElId("research"),
+          "research"
+        );
+        return resolve(true);
+      } else if (astrophysicsTechnology < 4) {
+        await specifiedUpgradeClick(
+          "astrophysicsTechnology",
+          "technologydetails",
+          5,
+          "research",
+          getElId("research"),
+          "research"
+        );
+        return resolve(true);
+      }
+    } else if (
+      deuteriumSynthesizer > 10 &&
+      energyTechnology < 4 &&
+      laserTechnology < 5 &&
+      ionTechnology < 2 &&
+      impulseDriveTechnology < 4
+    ) {
+      if (energyTechnology < 4) {
+        await specifiedUpgradeClick(
+          "energyTechnology",
+          "technologydetails",
+          5,
+          "research",
+          getElId("research"),
+          "research"
+        );
+        return resolve(true);
+      } else if (laserTechnology < 5) {
+        await specifiedUpgradeClick(
+          "laserTechnology",
+          "technologydetails",
+          5,
+          "research",
+          getElId("research"),
+          "research"
+        );
+        return resolve(true);
+      } else if (ionTechnology < 2) {
+        await specifiedUpgradeClick(
+          "ionTechnology",
+          "technologydetails",
+          5,
+          "research",
+          getElId("research"),
+          "research"
+        );
+        return resolve(true);
+      } else if (impulseDriveTechnology < 4) {
+        await specifiedUpgradeClick(
+          "impulseDriveTechnology",
+          "technologydetails",
+          5,
+          "research",
+          getElId("research"),
+          "research"
+        );
+        return resolve(true);
+      }
+    } else if (
+      deuteriumSynthesizer > 10 &&
+      roboticsFactory < 5 &&
+      computerTechnology < 5
+    ) {
+      if (roboticsFactory < 5) {
+        await specifiedUpgradeClick(
+          "roboticsFactory",
+          "technologydetails",
+          3,
+          "facilities",
+          getElId("facilities"),
+          "facilities"
+        );
+        return resolve(true);
+      } else if (computerTechnology < 5) {
+        await specifiedUpgradeClick(
+          "computerTechnology",
+          "technologydetails",
+          5,
+          "research",
+          getElId("research"),
+          "research"
+        );
+        return resolve(true);
+      }
+    } else if (
+      deuteriumSynthesizer > 13 &&
+      researchLaboratory < 6 &&
+      shieldingTechnology < 5 &&
+      hyperspaceTechnology < 3 &&
+      hyperspaceDriveTechnology < 4 &&
+      shipyard < 7
+    ) {
+      if (researchLaboratory < 6) {
+        await specifiedUpgradeClick(
+          "researchLaboratory",
+          "technologydetails",
+          3,
+          "facilities",
+          getElId("facilities"),
+          "facilities"
+        );
+        return resolve(true);
+      } else if (shieldingTechnology < 5) {
+        await specifiedUpgradeClick(
+          "shieldingTechnology",
+          "technologydetails",
+          5,
+          "research",
+          getElId("research"),
+          "research"
+        );
+        return resolve(true);
+      } else if (hyperspaceTechnology < 3) {
+        await specifiedUpgradeClick(
+          "hyperspaceTechnology",
+          "technologydetails",
+          5,
+          "research",
+          getElId("research"),
+          "research"
+        );
+        return resolve(true);
+      } else if (hyperspaceDriveTechnology < 4) {
+        await specifiedUpgradeClick(
+          "hyperspaceDriveTechnology",
+          "technologydetails",
+          5,
+          "research",
+          getElId("research"),
+          "research"
+        );
+        return resolve(true);
+      } else if (shipyard < 7) {
+        await specifiedUpgradeClick(
+          "shipyard",
+          "technologydetails",
+          3,
+          "facilities",
+          getElId("facilities"),
+          "facilities"
+        );
+        return resolve(true);
+      }
     }
 
     return resolve(false);
@@ -793,7 +1476,7 @@ function specifiedUpgradeTimeCalculation(mineEl, detailName, countdownSetName) {
         const costsArea = technologyDetails.querySelector("div[class='costs']");
         costsArea.querySelectorAll("li").forEach((costItem) => {
           const classText = costItem.getAttribute("class");
-          if (classText.includes("metal")) {
+          if (classText && classText.includes("metal")) {
             const requirement = Number(costItem.getAttribute("data-value"));
             const difference = metal - requirement;
 
@@ -803,7 +1486,7 @@ function specifiedUpgradeTimeCalculation(mineEl, detailName, countdownSetName) {
               );
               remaningTime = productionSecond;
             }
-          } else if (classText.includes("crystal")) {
+          } else if (classText && classText.includes("crystal")) {
             const requirement = Number(costItem.getAttribute("data-value"));
             const difference = crystal - requirement;
             if (difference < 0) {
@@ -814,7 +1497,7 @@ function specifiedUpgradeTimeCalculation(mineEl, detailName, countdownSetName) {
                 remaningTime = productionSecond;
               }
             }
-          } else if (classText.includes("deuterium")) {
+          } else if (classText && classText.includes("deuterium")) {
             const requirement = Number(costItem.getAttribute("data-value"));
             const difference = deuterium - requirement;
             if (difference < 0) {
@@ -831,7 +1514,8 @@ function specifiedUpgradeTimeCalculation(mineEl, detailName, countdownSetName) {
         const now = mathStabileRound(Date.now() / 1000);
         countdown[countdownSetName] = remaningTime + now;
         storageSet("countdown", countdown);
-        if (!(remaningTime + now > now)) {
+        if (!(remaningTime + now > now) && !gameReload) {
+          gameReload = true;
           location.reload();
         }
         return resolve(true);
@@ -903,7 +1587,7 @@ function mineUpgradeTimeCalculation(mineEl, detailName) {
         const costsArea = technologyDetails.querySelector("div[class='costs']");
         costsArea.querySelectorAll("li").forEach((costItem) => {
           const classText = costItem.getAttribute("class");
-          if (classText.includes("metal")) {
+          if (classText && classText.includes("metal")) {
             const requirement = Number(costItem.getAttribute("data-value"));
             const difference = metal - requirement;
 
@@ -913,7 +1597,7 @@ function mineUpgradeTimeCalculation(mineEl, detailName) {
               );
               remaningTime = productionSecond;
             }
-          } else if (classText.includes("crystal")) {
+          } else if (classText && classText.includes("crystal")) {
             const requirement = Number(costItem.getAttribute("data-value"));
             const difference = crystal - requirement;
             if (difference < 0) {
@@ -924,7 +1608,7 @@ function mineUpgradeTimeCalculation(mineEl, detailName) {
                 remaningTime = productionSecond;
               }
             }
-          } else if (classText.includes("deuterium")) {
+          } else if (classText && classText.includes("deuterium")) {
             const requirement = Number(costItem.getAttribute("data-value"));
             const difference = deuterium - requirement;
             if (difference < 0) {
@@ -941,7 +1625,8 @@ function mineUpgradeTimeCalculation(mineEl, detailName) {
         const now = mathStabileRound(Date.now() / 1000);
         countdown.producers = remaningTime + now;
         storageSet("countdown", countdown);
-        if (!(remaningTime + now > now)) {
+        if (!(remaningTime + now > now) && !gameReload) {
+          gameReload = true;
           location.reload();
         }
         resolve(true);
@@ -973,6 +1658,6 @@ function menuClick(number, subNumber = 0) {
   });
 }
 
-const generalIntervalTime = 3500;
+const generalIntervalTime = 3000;
 
 setInterval(start, generalIntervalTime);

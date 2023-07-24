@@ -17,6 +17,10 @@ export function getRndInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+export function isNumeric(n) {
+  return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
 export function isArrayEqual(val1, val2) {
   let isEqual = true;
   if (val2 && val1.length === val2.length) {
