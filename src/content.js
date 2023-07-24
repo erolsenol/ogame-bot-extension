@@ -1,3 +1,5 @@
+import qs from "qs";
+import $ from "jquery";
 import init from "./ui";
 import {
   getElId,
@@ -16,11 +18,12 @@ import {
   initFacility,
   initLifeform,
   initCountdown,
-  initGameStatus,
+  // initGameStatus,
   initOvermark,
   initResearch,
   initShipyard,
   initGamePlayStatus,
+  initTarget,
 } from "./constant";
 
 console.log("content");
@@ -30,7 +33,7 @@ let producer = StorageGetInitialize("producer", initProducer);
 let facility = StorageGetInitialize("facility", initFacility);
 let lifeform = StorageGetInitialize("lifeform", initLifeform);
 let countdown = StorageGetInitialize("countdown", initCountdown);
-let gameStatus = StorageGetInitialize("gameStatus", initGameStatus);
+// let gameStatus = StorageGetInitialize("gameStatus", initGameStatus);
 let overmark = StorageGetInitialize("overmark", initOvermark);
 let research = StorageGetInitialize("research", initResearch);
 let shipyard = StorageGetInitialize("shipyard", initShipyard);
@@ -76,10 +79,10 @@ function getResources() {
     darkmatter,
   };
 
-  gameStatus.energyLow = energy < 0;
+  // gameStatus.energyLow = energy < 0;
 
   storageSet("resource", resource);
-  storageSet("gameStatus", gameStatus);
+  // storageSet("gameStatus", gameStatus);
   //   console.log("resource", resource);
 }
 
@@ -469,6 +472,10 @@ async function start() {
     await standartSuppliesDevelopment();
   } else if (gameWayConditionCalc("lfbuildings")) {
     await standartLfbuildingsDevelopment();
+  } else if (gameWayConditionCalc("message")) {
+    await messageClear();
+  } else if (gameWayConditionCalc("attack")) {
+    await attackTarget();
   }
 }
 
@@ -480,7 +487,16 @@ function gameWayConditionCalc(type) {
   );
   const now = mathStabileRound(Date.now() / 1000);
   const countdown = StorageGetInitialize("countdown", initCountdown);
-  console.log("countdown:", countdown);
+
+  const keys = Object.keys(countdown);
+  let time = 0;
+  keys.forEach((item) => {
+    if (countdown[item] - now > time) {
+      time = now - countdown[item];
+    }
+  });
+
+  if (time > 0) console.log("time", time);
 
   if (type === "standartDevelop") {
     let remaningTime = 0;
@@ -495,7 +511,221 @@ function gameWayConditionCalc(type) {
     }
     return gamePlayStatus.producers.status && countdown.producers < now;
   }
-  return gamePlayStatus[type].status && countdown[type] < now;
+
+  return gamePlayStatus[type].status === 1 && countdown[type] < now;
+}
+
+//ship quantities will be taken from the fleet page
+async function attackTarget() {
+  const gamePlayStatus = StorageGetInitialize(
+    "gamePlayStatus",
+    initGamePlayStatus
+  );
+  const countdown = StorageGetInitialize("countdown", initCountdown);
+  const target = StorageGetInitialize("target", initTarget);
+
+  const shipsChosen = getElId("shipsChosen");
+  if (!shipsChosen) {
+    await menuClick(8);
+    return;
+  }
+
+  const fleet1 = getElId("fleet1");
+  if (!(fleet1.getAttribute("style") || "").includes("none")) {
+    const transporterSmall = shipsChosen.querySelector(
+      "li[class~='transporterSmall']"
+    );
+    const avaibleResource = (target.resource / 100) * target.lootRate;
+    const transporterSmallCapacity = 5000 * 1.25;
+    const totalTSmall = mathStabileRound(
+      avaibleResource / transporterSmallCapacity
+    );
+
+    const tpSmallCount = Number(
+      transporterSmall.children[0].children[0].children[0].innerText
+    );
+    console.log("tpSmallCount", tpSmallCount);
+    if (tpSmallCount < totalTSmall) {
+      const now = mathStabileRound(Date.now() / 1000);
+      countdown.message = now + 1200;
+      storageSet("countdown", countdown);
+      gamePlayStatus.message.status = 1;
+      gamePlayStatus.attack.status = 0;
+      storageSet("gamePlayStatus", gamePlayStatus);
+      console.log("Not Found Ship");
+      return;
+    }
+
+    // const qTransporter = $("li").hasClass("transporterSmall");
+    // console.log("qTransporter", qTransporter);
+    // $("li").hasClass("transporterSmall").keydown();
+
+    $('input[name="transporterSmall"]').keyup();
+
+    let keyupEvent = new Event("keyup");
+
+    transporterSmall.querySelector("input").dispatchEvent(keyupEvent);
+    transporterSmall.querySelector("input").value = totalTSmall;
+    const battleships = getElId("battleships");
+    battleships.click();
+
+    console.log("Set input");
+  }
+
+  const fleet2 = getElId("fleet2");
+  if ((fleet2.getAttribute("style") || "").includes("none")) {
+    const continueToFleet2 = getElId("continueToFleet2");
+    setTimeout(() => {
+      continueToFleet2.children[0].click();
+    }, 500);
+    console.log("first click");
+    return;
+  } else {
+    const sendFleet = getElId("sendFleet");
+    sendFleet.children[0].click();
+    target.attacked = true;
+    storageSet("target", target);
+    gamePlayStatus.message.status = 1;
+    gamePlayStatus.attack.status = 0;
+    storageSet("gamePlayStatus", gamePlayStatus);
+    console.log("second click");
+    return;
+  }
+}
+
+const mInfoFleetText = "Filolar: ";
+const mInfoDefenceText = "Savunma: ";
+const mInfoResourceText = "Kaynaklar: ";
+const mInfoLootText = "Ganimet: ";
+async function messageClear() {
+  const gamePlayStatus = StorageGetInitialize(
+    "gamePlayStatus",
+    initGamePlayStatus
+  );
+  const target = StorageGetInitialize("target", initTarget);
+
+  const messageFleetTabEl = getElId("tabs-nfFleets");
+  if (!messageFleetTabEl) {
+    const messageWrapperEl = getElId("message-wrapper");
+    if (messageWrapperEl) {
+      messageWrapperEl.children[0].click();
+      return;
+    }
+  }
+
+  if (!messageFleetTabEl.getAttribute("class").includes("ui-tabs-active")) {
+    messageFleetTabEl.children[0].click();
+  }
+
+  const spyTabEl = getElId("subtabs-nfFleet20");
+  if (!spyTabEl) {
+    return;
+  }
+
+  if (!spyTabEl.getAttribute("class").includes("ui-tabs-active")) {
+    spyTabEl.children[0].click();
+  }
+
+  const fleetsgenericpage = getElId("fleetsgenericpage");
+  if (!fleetsgenericpage) {
+    return;
+  }
+
+  const messageEls = fleetsgenericpage.querySelectorAll("li[class~='msg']");
+  if (messageEls.length < 1) {
+    gamePlayStatus.message.status = 0;
+    storageSet("gamePlayStatus", gamePlayStatus);
+  }
+
+  let biggestResource = 0;
+  for (let index = 0; index < messageEls.length; index++) {
+    const messageEl = messageEls[index];
+    const messageContent = messageEl.querySelector(".msg_content");
+    if (messageContent.children.length > 8) {
+      if (messageContent.children[8].children.length < 2) {
+        //delete
+        messageEl
+          .querySelector(".fright")
+          .querySelector("a")
+          .children[0].click();
+        return;
+      }
+
+      const msgFleetPoint = Number(
+        messageContent.children[8].children[0].innerText
+          .replace(mInfoFleetText, "")
+          .replaceAll(".", "")
+      );
+      const msgDefencePoint = Number(
+        messageContent.children[8].children[0].innerText
+          .replace(mInfoDefenceText, "")
+          .replaceAll(".", "")
+      );
+
+      if (msgFleetPoint > 0 || msgDefencePoint > 0) {
+        messageEl
+          .querySelector(".fright")
+          .querySelector("a")
+          .children[0].click();
+        return;
+      }
+
+      const msgTotalResource = Number(
+        messageContent.children[6].children[1].innerText
+          .replace(mInfoResourceText, "")
+          .replaceAll(".", "")
+      );
+      if (target.resource === msgTotalResource && target.attacked) {
+        messageEl
+          .querySelector(".fright")
+          .querySelector("a")
+          .children[0].click();
+        storageSet("target", initTarget);
+        return;
+      }
+      if (msgTotalResource > biggestResource) {
+        biggestResource = msgTotalResource;
+      }
+    }
+  }
+
+  for (let index = 0; index < messageEls.length; index++) {
+    const messageEl = messageEls[index];
+    const messageContent = messageEl.querySelector(".msg_content");
+    if (messageContent.children.length > 8) {
+      const msgTotalResource = Number(
+        messageContent.children[6].children[1].innerText
+          .replace(mInfoResourceText, "")
+          .replaceAll(".", "")
+      );
+      if (biggestResource === msgTotalResource) {
+        const targetGalaxyInfo = qs.parse(
+          messageEl.querySelector("a").getAttribute("href")
+        );
+        const lootRate = Number(
+          messageContent.children[7].children[0].innerText
+            .replace(mInfoLootText, "")
+            .replace("%", "")
+        );
+        storageSet("target", {
+          lootRate,
+          resource: msgTotalResource,
+          galaxy: targetGalaxyInfo.galaxy,
+          position: targetGalaxyInfo.position,
+          system: targetGalaxyInfo.system,
+        });
+        messageEl.querySelector("span[class~='icon_attack']").click();
+        gamePlayStatus.message.status = 0;
+        gamePlayStatus.attack.status = 1;
+        storageSet("gamePlayStatus", gamePlayStatus);
+        return;
+      }
+    }
+  }
+
+  gamePlayStatus.message.status = 0;
+  storageSet("gamePlayStatus", gamePlayStatus);
+  console.log("over");
 }
 
 async function standartSuppliesDevelopment() {

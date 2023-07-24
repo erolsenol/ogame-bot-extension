@@ -47,9 +47,9 @@ export const initLifeform = {
   lifeformTech11112: 0,
 };
 
-export const initGameStatus = {
-  energyLow: false,
-};
+// export const initGameStatus = {
+//   energyLow: false,
+// };
 
 export const initCountdown = {
   producers: 0,
@@ -57,6 +57,7 @@ export const initCountdown = {
   facilities: 0,
   research: 0,
   shipyard: 0,
+  message: 0,
   defense: 0,
   discovery: 0,
   attack: 0,
@@ -72,6 +73,7 @@ export const initGamePlayStatus = {
   facilities: { ...playStatus },
   research: { ...playStatus },
   shipyard: { ...playStatus },
+  message: { ...playStatus },
   defense: { ...playStatus },
   discovery: { ...playStatus },
   attack: { ...playStatus },
@@ -124,4 +126,18 @@ export const initShipyard = {
   espionageProbe: 0,
   solarSatellite: 0,
   resbuggy: 0,
+};
+
+export const initMessageSetting = {
+  delDefence: false,
+  delFleet: false,
+  minResource: 20000,
+  maxResource: 200000,
+};
+
+export const initTarget = {
+  galaxy: 0,
+  position: 0,
+  system: 0,
+  attacked: false,
 };
