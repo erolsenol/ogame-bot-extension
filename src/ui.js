@@ -28,6 +28,7 @@ const messageSetting = StorageGetInitialize(
   "messageSetting",
   initMessageSetting
 );
+const countdown = StorageGetInitialize("countdown", initCountdown);
 
 const init = (left) => {
   const myCon = getElId("my-container");
@@ -134,6 +135,14 @@ function initEls(el) {
   divSpySettings.append(inputSpyInterval);
   divSpyContainer.append(divSpySettings);
   const buttonSpyStart = generateButton("Start Spy");
+  buttonSpyStart.addEventListener("click", function () {
+    const gamePlayStatus = StorageGetInitialize(
+      "gamePlayStatus",
+      initGamePlayStatus
+    );
+    gamePlayStatus.spyGalaxy.status = 1;
+    storageSet("gamePlayStatus", gamePlayStatus);
+  });
   buttonSpyStart.style.marginTop = "5px";
   buttonSpyStart.style.width = "110px";
   buttonSpyStart.style.height = "22px";
@@ -221,8 +230,8 @@ function initEls(el) {
 
   const buttonMessageAttack = generateButton("Message Attack");
   buttonMessageAttack.style.marginTop = "5px";
-  buttonMessageAttack.style.width = "110px";
-  buttonMessageAttack.style.height = "22px";
+  buttonMessageAttack.style.width = "130px";
+  buttonMessageAttack.style.height = "23px";
   buttonMessageAttack.style.border = `solid 2px ${
     gamePlayStatus.message.status ? "green" : "red"
   }`;
@@ -241,11 +250,8 @@ function initEls(el) {
 
   const buttonStop = generateButton("Stop");
   buttonStop.style.marginTop = "5px";
-  buttonStop.style.width = "110px";
-  buttonStop.style.height = "22px";
-  buttonStop.style.border = `solid 2px ${
-    gamePlayStatus.message.status ? "green" : "red"
-  }`;
+  buttonStop.style.width = "130px";
+  buttonStop.style.height = "23px";
   buttonStop.addEventListener("click", function () {
     const gamePlayStatus = StorageGetInitialize(
       "gamePlayStatus",
@@ -259,6 +265,18 @@ function initEls(el) {
   });
   divAttackContainer.append(buttonStop);
 
+  const buttonCountdownReset = generateButton("Countdown Reset");
+  buttonCountdownReset.style.marginTop = "5px";
+  buttonCountdownReset.style.width = "130px";
+  buttonCountdownReset.style.height = "23px";
+  buttonCountdownReset.addEventListener("click", function () {
+    const countdown = StorageGetInitialize("countdown", initCountdown);
+    const keys = Object.keys(countdown);
+    keys.forEach((item) => (countdown[item] = 0));
+    storageSet("countdown", countdown);
+  });
+  divAttackContainer.append(buttonCountdownReset);
+
   el.append(divAttackContainer);
 
   const divClickTime = generateDiv();
@@ -270,7 +288,7 @@ function generateButton(text) {
   button.style.marginBottom = "3px";
   button.innerHTML = text;
   button.style.backgroundColor = "rgb(225, 225, 225)";
-  button.style.boxShadow = "0 3px #666";
+  button.style.boxShadow = "0 2px #000";
   button.style.transform = "translateY(4px)";
   return button;
 }

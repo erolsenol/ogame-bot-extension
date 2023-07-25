@@ -146,6 +146,8 @@ export const initTarget = {
 
 export const initMyPlanetAttack = {
   time: 0,
+  coor: [],
+  escape: false,
 };
 
 export const initSpyGalaxy = {

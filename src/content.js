@@ -40,10 +40,9 @@ const countdown = StorageGetInitialize("countdown", initCountdown);
 const overmark = StorageGetInitialize("overmark", initOvermark);
 const research = StorageGetInitialize("research", initResearch);
 const shipyard = StorageGetInitialize("shipyard", initShipyard);
-const myPlanetAttack = StorageGetInitialize(
-  "myPlanetAttack",
-  initMyPlanetAttack
-);
+const myPlanetAttack = StorageGetInitialize("myPlanetAttack", [
+  initMyPlanetAttack,
+]);
 const resourceGeneration = StorageGetInitialize(
   "resourceGeneration",
   initResource
@@ -268,14 +267,17 @@ function getTechnologies() {
     const researchContainer = researchAreaEl.querySelector(
       `li[class~="${researchName}"]`
     );
-    const spanVal = "level";
-    const researchLevelEl = researchContainer.querySelector(
-      `span[class='${spanVal}']`
-    );
 
-    const level = researchLevelEl.getAttribute("data-value");
+    if (researchContainer) {
+      const spanVal = "level";
+      const researchLevelEl = researchContainer.querySelector(
+        `span[class='${spanVal}']`
+      );
 
-    research[researchName] = Number(level);
+      const level = researchLevelEl.getAttribute("data-value");
+
+      research[researchName] = Number(level);
+    }
   }
   storageSet("research", research);
 
@@ -449,18 +451,37 @@ async function planetInitialize() {}
 
 //attack
 function hasAttack() {
+  let myPlanetAttack = StorageGetInitialize("myPlanetAttack", []);
+
   const attackEl = getElId("attack_alert");
   if (attackEl) {
-    const eventBoxEl = getElId("eventboxFilled");
-    if (eventBoxEl) {
-      const hostileEl = eventBoxEl.querySelector(".hostile");
-      if (hostileEl) {
-        const myPlanetAttack = StorageGetInitialize(
-          "myPlanetAttack",
-          initMyPlanetAttack
-        );
-        //attack True
+    const eventContent = getElId("eventContent");
+    if (eventContent) {
+      const eventTrs = eventContent.querySelectorAll("tr");
+      myPlanetAttack = [];
+      for (let index = 0; index < eventTrs.length; index++) {
+        const eventTr = eventTrs[index];
+        const hostileSpan = eventTr.querySelector("span[class~='hostile']");
+        if (hostileSpan) {
+          const attackTime = Number(eventTr.getAttribute("data-arrival-time"));
+          const planetCoor = eventTr.children[8].innerText
+            .trim()
+            .replace("[", "")
+            .replace("]", "")
+            .split(":");
+
+          myPlanetAttack.push({
+            time: attackTime,
+            coor: planetCoor,
+            escape: false,
+          });
+        }
       }
+    }
+
+    if (myPlanetAttack.length > 0) {
+      storageSet("myPlanetAttack", myPlanetAttack);
+      console.log("attack");
     }
   }
 }
@@ -478,11 +499,17 @@ async function start() {
     return;
   }
 
+  const galaxyLoading = getElId("galaxyLoading");
+  if (galaxyLoading && !galaxyLoading.hasAttribute("style")) {
+    return;
+  }
+
   const login = hasLogin();
   if (!login) return;
 
-  gameInitialize();
+  hasAttack();
 
+  gameInitialize();
   if (gameWayConditionCalc("standartDevelop")) {
     await standartSuppliesDevelopment();
   } else if (gameWayConditionCalc("lfbuildings")) {
@@ -531,7 +558,59 @@ function gameWayConditionCalc(type) {
 
   return gamePlayStatus[type].status === 1 && countdown[type] < now;
 }
+async function galaxySystemRun() {
+  return new Promise((resolve, reject) => {
+    const galaxycomponent = getElId("galaxycomponent");
+    let spyGalaxy = StorageGetInitialize("spyGalaxy", initSpyGalaxy);
+    const spyGalaxyInterval = Number(
+      StorageGetInitialize("spyGalaxyInterval", "30")
+    );
 
+    const galaxy_input = getElId("galaxy_input");
+    const system_input = getElId("system_input");
+
+    if (
+      spyGalaxy.galaxy == 0 &&
+      spyGalaxy.position == -1 &&
+      spyGalaxy.system == 0
+    ) {
+      spyGalaxy.galaxy = Number(galaxy_input.getAttribute("value"));
+      spyGalaxy.system = Number(system_input.getAttribute("value"));
+      spyGalaxy.position = -1;
+      spyGalaxy.start = {
+        galaxy: spyGalaxy.galaxy,
+        system: spyGalaxy.system,
+      };
+      storageSet("spyGalaxy", spyGalaxy);
+    }
+
+    const galaxyContent = getElId("galaxyContent");
+    if (!galaxyContent) {
+      return resolve(true);
+    }
+
+    if (
+      galaxy_input.getAttribute("value") != spyGalaxy.galaxy ||
+      system_input.getAttribute("value") != spyGalaxy.system
+    ) {
+      if (galaxy_input.getAttribute("value") != spyGalaxy.galaxy) {
+        galaxy_input.value = spyGalaxy.galaxy;
+        galaxy_input.setAttribute("value", spyGalaxy.galaxy);
+      }
+      if (system_input.getAttribute("value") != spyGalaxy.system) {
+        system_input.value = spyGalaxy.system;
+        system_input.setAttribute("value", spyGalaxy.system);
+      }
+      setTimeout(() => {
+        galaxycomponent.querySelector("div[class='btn_blue']").click();
+        return resolve(true);
+      }, 500);
+    }
+    return resolve(true);
+  });
+}
+
+let fleetcycle = StorageGetInitialize("fleetcycle", 0);
 async function spyGalaxyStart() {
   const gamePlayStatus = StorageGetInitialize(
     "gamePlayStatus",
@@ -549,51 +628,17 @@ async function spyGalaxyStart() {
     return;
   }
 
-  let spyGalaxy = StorageGetInitialize("spyGalaxy", initSpyGalaxy);
-  const spyGalaxyInterval = Number(
-    StorageGetInitialize("spyGalaxyInterval", "30")
+  const errorBoxDecisionNo = errorBoxDecision.querySelector(
+    "#errorBoxDecisionNo"
   );
-
-  const galaxy_input = getElId("galaxy_input");
-  const system_input = getElId("system_input");
-
-  if (
-    spyGalaxy.galaxy == 0 &&
-    spyGalaxy.position == -1 &&
-    spyGalaxy.system == 0
-  ) {
-    spyGalaxy.galaxy = Number(galaxy_input.getAttribute("value"));
-    spyGalaxy.system = Number(system_input.getAttribute("value"));
-    spyGalaxy.position = -1;
-    spyGalaxy.start = {
-      galaxy: spyGalaxy.galaxy,
-      system: spyGalaxy.system,
-    };
-    storageSet("spyGalaxy", spyGalaxy);
-  }
-
-  const galaxyContent = getElId("galaxyContent");
-  if (!galaxyContent) {
+  if (errorBoxDecisionNo && errorBoxDecisionNo.innerText.length > 1) {
+    errorBoxDecisionNo.click();
     return;
   }
 
-  if (
-    galaxy_input.getAttribute("value") != spyGalaxy.galaxy ||
-    system_input.getAttribute("value") != spyGalaxy.system
-  ) {
-    if (galaxy_input.getAttribute("value") != spyGalaxy.galaxy) {
-      galaxy_input.value = spyGalaxy.galaxy;
-      galaxy_input.setAttribute("value", spyGalaxy.galaxy);
-    }
-    if (system_input.getAttribute("value") != spyGalaxy.system) {
-      system_input.value = spyGalaxy.system;
-      system_input.setAttribute("value", spyGalaxy.system);
-    }
-    setTimeout(() => {
-      galaxycomponent.querySelector("div[class='btn_blue']").click();
-    }, 500);
-    return;
-  }
+  let spyGalaxy = StorageGetInitialize("spyGalaxy", initSpyGalaxy);
+
+  await galaxySystemRun();
 
   const galaxyRows = [];
   const galaxyRowEls = galaxyContent.querySelectorAll(
@@ -617,13 +662,19 @@ async function spyGalaxyStart() {
       cellPlayerName.children.length > 0 &&
       !cellPlayerName.children[0]
         ?.getAttribute("class")
+        .includes("status_abbr_outlaw") &&
+      !cellPlayerName.children[0]
+        ?.getAttribute("class")
         .includes("honorRank") &&
       !cellPlayerName.children[0]
         ?.getAttribute("class")
         .includes("status_abbr_strong") &&
       !cellPlayerName.children[0]
         ?.getAttribute("class")
-        .includes("status_abbr_vacation")
+        .includes("status_abbr_vacation") &&
+      !cellPlayerName.children[0]
+        ?.getAttribute("class")
+        .includes("status_abbr_noob")
     ) {
       if (cellPlayerName.children.length > 1) {
         let symbols = cellPlayerName.children[1].querySelectorAll("span");
@@ -668,7 +719,7 @@ async function spyGalaxyStart() {
 
   spyGalaxy = { ...spyGalaxy, system: spyGalaxy.system - 1, position: -1 };
   storageSet("spyGalaxy", spyGalaxy);
-  return;
+  await galaxySystemRun();
 }
 
 const spanFleetText = "Filolar:";
@@ -745,8 +796,12 @@ async function attackTarget() {
 
   const fleet1 = getElId("fleet1");
   if (!(fleet1.getAttribute("style") || "").includes("none")) {
+    const ships = shipsChosen.querySelectorAll("li[class~='technology']");
     const transporterSmall = shipsChosen.querySelector(
       "li[class~='transporterSmall']"
+    );
+    const transporterLarge = shipsChosen.querySelector(
+      "li[class~='transporterLarge']"
     );
     const avaibleResource = (target.resource / 100) * target.lootRate;
     const transporterSmallCapacity = 5000 * 1.25;
@@ -767,16 +822,43 @@ async function attackTarget() {
       console.log("Not Found Ship");
       return;
     }
-    if (transporterSmall.querySelector("input").value == totalTSmall) {
-      console.log("alredy");
+    if (
+      transporterSmall.querySelector("input").value == totalTSmall &&
+      fleetcycle % 2 == 0
+    ) {
+      for (let index = 0; index < ships.length; index++) {
+        const ship = ships[index];
+        if (
+          ship.getAttribute("data-status") === "on" &&
+          !ship.getAttribute("class").includes("transporterSmall")
+        ) {
+          console.log("focus:", ship.querySelector("input"));
+          ship.querySelector("input").focus();
+          fleetcycle += 1;
+          storageSet("fleetcycle", fleetcycle);
+          break;
+        }
+      }
+      if (fleetcycle > 5) {
+        storageSet("fleetcycle", 0);
+        await menuClick(8);
+        return;
+      }
+    } else {
+      transporterSmall.querySelector("input").focus();
+      transporterSmall.querySelector("input").value = totalTSmall;
       return;
     }
-    transporterSmall.querySelector("input").value = totalTSmall;
-    return;
+
+    //ship not found
+    const warning = fleet1.querySelector("#warning");
+    if (warning) {
+      console.log("ship not found");
+    }
   }
 
   const fleet2 = getElId("fleet2");
-  if ((fleet2.getAttribute("style") || "").includes("none") && false) {
+  if ((fleet2.getAttribute("style") || "").includes("none")) {
     const continueToFleet2 = getElId("continueToFleet2");
     setTimeout(() => {
       continueToFleet2.children[0].click();
@@ -794,6 +876,7 @@ async function attackTarget() {
     gamePlayStatus.attack.status = 0;
     storageSet("gamePlayStatus", gamePlayStatus);
     console.log("second click");
+    storageSet("fleetcycle", 0);
     return;
   }
 }
@@ -839,15 +922,8 @@ async function messageClear() {
   const messageEls = fleetsgenericpage.querySelectorAll("li[class~='msg']");
   if (messageEls.length < 1) {
     gamePlayStatus.message.status = 0;
+    gamePlayStatus.spyGalaxy.status = 1;
     storageSet("gamePlayStatus", gamePlayStatus);
-  }
-
-  const errorBoxDecision = getElId("errorBoxDecision");
-  if (errorBoxDecision) {
-    const errorBoxDecisionNo = errorBoxDecision.querySelector(
-      "#errorBoxDecisionNo"
-    );
-    errorBoxDecisionNo.click();
     return;
   }
 
@@ -855,6 +931,9 @@ async function messageClear() {
   for (let index = 0; index < messageEls.length; index++) {
     const messageEl = messageEls[index];
     const messageContent = messageEl.querySelector(".msg_content");
+    if (!messageContent) {
+      return;
+    }
     if (messageContent.children.length < 9) {
       messageEl.querySelector(".fright").querySelector("a").children[0].click();
       return;
@@ -1660,4 +1739,6 @@ function menuClick(number, subNumber = 0) {
 
 const generalIntervalTime = 3000;
 
-setInterval(start, generalIntervalTime);
+const mainInterval = setInterval(start, generalIntervalTime);
+
+setTimeout(() => {}, getRndInteger());
