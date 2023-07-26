@@ -852,6 +852,7 @@ async function attackTarget() {
       console.log("if false");
       console.log("focus:", transporterSmall.querySelector("input"));
       fleetcycle += 1;
+      transporterSmall.querySelector("input").parentElement.focus();
       transporterSmall.querySelector("input").focus();
       transporterSmall.querySelector("input").value = totalTSmall;
       transporterSmall
@@ -870,11 +871,13 @@ async function attackTarget() {
   const fleet2 = getElId("fleet2");
   if ((fleet2.getAttribute("style") || "").includes("none")) {
     const continueToFleet2 = getElId("continueToFleet2");
-    setTimeout(() => {
-      continueToFleet2.children[0].click();
-    }, 500);
-    console.log("first click");
-    return;
+    if (!continueToFleet2.getAttribute("class").includes("off")) {
+      setTimeout(() => {
+        continueToFleet2.children[0].click();
+      }, 500);
+      console.log("first click");
+      return;
+    }
   }
   // if (false)
   else {

@@ -59,7 +59,15 @@ const init = (left) => {
   // sheet.insertRule("strong { color: red; }");
 
   //style
-  addNewStyle(`.tooltip {
+  addNewStyle(`
+  .my-container i {
+    font-size: 14px;
+    border: 1px solid #fff;
+    border-radius: 100%;
+    padding: 4px;
+  }
+  
+  .tooltip {
     position: relative;
     display: inline-block;
     border-bottom: 1px dotted black;
@@ -67,7 +75,7 @@ const init = (left) => {
   
   .tooltip .tooltiptext {
     visibility: hidden;
-    width: 120px;
+    width: 100px;
     background-color: black;
     color: #fff;
     border-radius: 6px;
@@ -77,14 +85,12 @@ const init = (left) => {
     position: absolute;
     z-index: 1;
 
-    top: 100%;
-    left: 50%;
-    margin-left: -60px;
+    bottom: 30px;
+    margin-left: -43px;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 15px;
-    width: 30px;
   }
   
   .tooltip:hover .tooltiptext {
@@ -104,6 +110,7 @@ const init = (left) => {
 
   let container = document.createElement("div");
   container.setAttribute("id", "my-container");
+  container.setAttribute("class", "my-container");
   container.style.zIndex = "2";
   container.style.height = "350px";
   container.style.width = "178px";
@@ -118,6 +125,20 @@ const init = (left) => {
 
   left.append(container);
 };
+
+function generateTooltip(text) {
+  const tooltip = document.createElement("div");
+  tooltip.setAttribute("class", "tooltip");
+  const tooltiptext = document.createElement("div");
+  tooltiptext.setAttribute("class", "tooltiptext");
+  tooltiptext.innerText = text;
+
+  let iconInfo = document.createElement("i");
+  iconInfo.setAttribute("class", "fa fa-info");
+  tooltip.append(tooltiptext);
+  tooltip.append(iconInfo);
+  return tooltip;
+}
 
 function initEls(el) {
   const divSupplies = generateDiv();
@@ -140,23 +161,8 @@ function initEls(el) {
   divSupplies.append(CbSupplies);
   const labelSupplies = generateLabel("Supplies Develop", "cb-supplies");
   divSupplies.append(labelSupplies);
-
-  const tooltip = generateDiv();
-  tooltip.setAttribute("class", "tooltip");
-  const tooltiptext = generateDiv();
-  tooltiptext.setAttribute("class", "tooltiptext");
-  tooltiptext.innerText = "Test 123";
-
-  let iconInfo = document.createElement("i");
-  iconInfo.setAttribute("class", "fa fa-info");
-  iconInfo.style.fontSize = "14px";
-  iconInfo.style.marginLeft = "0px";
-  iconInfo.style.border = "1px solid #fff";
-  iconInfo.style.borderRadius = "100%";
-  iconInfo.style.padding = "4px";
-  tooltip.append(tooltiptext);
-  tooltip.append(iconInfo);
-  divSupplies.append(tooltip);
+  const tooltipSupplies = generateTooltip("AA AA");
+  divSupplies.append(tooltipSupplies);
   el.append(divSupplies);
 
   const divLfbuildings = generateDiv();
@@ -182,6 +188,8 @@ function initEls(el) {
     "cb-lfbuildings"
   );
   divLfbuildings.append(labelLfbuildings);
+  const tooltipLf = generateTooltip("AA AA");
+  divLfbuildings.append(tooltipLf);
   el.append(divLfbuildings);
 
   const divSpyContainer = generateDiv();
