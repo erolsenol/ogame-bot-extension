@@ -126,9 +126,21 @@ function initEls(el) {
   divSpySettings.style.alignItems = "space-beetwen";
   divSpySettings.style.width = "100%";
   const inputSpyInterval = generateInput("text", "spy-interval");
-  inputSpyInterval.value = StorageGetInitialize("spyGalaxyInterval", "30");
+  inputSpyInterval.value = StorageGetInitialize("spySystemInterval", "30");
   inputSpyInterval.style.width = "80px";
+  inputSpyInterval.addEventListener("input", function () {
+    if (isNumeric(inputSpyInterval.value)) {
+      if (Number(inputSpyInterval.value) > 499) {
+        inputSpyInterval.value = "500";
+      }
+      storageSet("spySystemInterval", inputSpyInterval.value);
+      return;
+    }
+    console.log("return");
+    inputSpyInterval.value = StorageGetInitialize("spySystemInterval", 30);
+  });
   const labelSpyInterval = generateLabel("System Interval");
+
   labelSpyInterval.style.width = "50px";
   labelSpyInterval.style.padding = "0";
   divSpySettings.append(labelSpyInterval);

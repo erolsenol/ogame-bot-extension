@@ -52,7 +52,7 @@ const gamePlayStatus = StorageGetInitialize(
   initGamePlayStatus
 );
 const spyGalaxy = StorageGetInitialize("spyGalaxy", initSpyGalaxy);
-const hasDevelopment = StorageGetInitialize("hasDevelopment", false);
+let hasDevelopment = StorageGetInitialize("hasDevelopment", false);
 let gameReload = false;
 
 //resource
@@ -610,7 +610,7 @@ async function galaxySystemRun() {
   });
 }
 
-let fleetcycle = StorageGetInitialize("fleetcycle", 0);
+let fleetcycle = StorageGetInitialize("fleetcycle", 1);
 async function spyGalaxyStart() {
   const gamePlayStatus = StorageGetInitialize(
     "gamePlayStatus",
@@ -822,10 +822,12 @@ async function attackTarget() {
       console.log("Not Found Ship");
       return;
     }
+    console.log("fleetcycle:", fleetcycle, fleetcycle % 2 == 0);
     if (
       transporterSmall.querySelector("input").value == totalTSmall &&
       fleetcycle % 2 == 0
     ) {
+      console.log("if true");
       for (let index = 0; index < ships.length; index++) {
         const ship = ships[index];
         if (
@@ -833,20 +835,28 @@ async function attackTarget() {
           !ship.getAttribute("class").includes("transporterSmall")
         ) {
           console.log("focus:", ship.querySelector("input"));
+          ship.querySelector("input").parentElement.focus();
           ship.querySelector("input").focus();
           fleetcycle += 1;
           storageSet("fleetcycle", fleetcycle);
           break;
         }
       }
-      if (fleetcycle > 5) {
+      if (fleetcycle > 10) {
+        console.log("fleetcycle > 5");
         storageSet("fleetcycle", 0);
         await menuClick(8);
         return;
       }
     } else {
+      console.log("if false");
+      console.log("focus:", transporterSmall.querySelector("input"));
+      fleetcycle += 1;
       transporterSmall.querySelector("input").focus();
       transporterSmall.querySelector("input").value = totalTSmall;
+      transporterSmall
+        .querySelector("input")
+        .setAttribute("value", totalTSmall);
       return;
     }
 
@@ -885,6 +895,11 @@ const mInfoFleetText = "Filolar: ";
 const mInfoDefenceText = "Savunma: ";
 const mInfoResourceText = "Kaynaklar: ";
 const mInfoLootText = "Ganimet: ";
+let messagecycle = StorageGetInitialize("messagecycle", 0);
+function messagecycleUp() {
+  messagecycle += 1;
+  storageSet("messagecycle", messagecycle);
+}
 async function messageClear() {
   const gamePlayStatus = StorageGetInitialize(
     "gamePlayStatus",
@@ -895,7 +910,8 @@ async function messageClear() {
   const messageFleetTabEl = getElId("tabs-nfFleets");
   if (!messageFleetTabEl) {
     const messageWrapperEl = getElId("message-wrapper");
-    if (messageWrapperEl) {
+    if (messageWrapperEl || messagecycle > 49) {
+      storageSet("messagecycle", 0);
       messageWrapperEl.children[0].click();
       return;
     }
@@ -934,13 +950,19 @@ async function messageClear() {
     if (!messageContent) {
       return;
     }
-    if (messageContent.children.length < 9) {
+
+    if (
+      messageContent.children.length < 9 ||
+      messageContent.children[2].children[1].getAttribute("class") ===
+        "status_abbr_noob"
+    ) {
       messageEl.querySelector(".fright").querySelector("a").children[0].click();
       return;
     }
     if (messageContent.children.length > 8) {
       if (messageContent.children[8].children.length < 2) {
         //delete
+        messagecycleUp();
         messageEl
           .querySelector(".fright")
           .querySelector("a")
@@ -960,6 +982,7 @@ async function messageClear() {
       );
 
       if (msgFleetPoint > 0 || msgDefencePoint > 0) {
+        messagecycleUp();
         messageEl
           .querySelector(".fright")
           .querySelector("a")
@@ -977,6 +1000,7 @@ async function messageClear() {
         "20000"
       );
       if (messageMinResource > msgTotalResource) {
+        messagecycleUp();
         messageEl
           .querySelector(".fright")
           .querySelector("a")
@@ -984,6 +1008,7 @@ async function messageClear() {
         return;
       }
       if (target.resource === msgTotalResource && target.attacked) {
+        messagecycleUp();
         messageEl
           .querySelector(".fright")
           .querySelector("a")
