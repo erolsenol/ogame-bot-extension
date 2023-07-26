@@ -1,3 +1,9 @@
+import moment from "moment";
+
+export const timestampToDate = (time) => {
+  return moment.unix(time).format("DD-MM-YYYY hh:mm:ss");
+};
+
 export const getElId = (id) => {
   const element = document.getElementById(id);
 

@@ -30,6 +30,17 @@ const messageSetting = StorageGetInitialize(
 );
 const countdown = StorageGetInitialize("countdown", initCountdown);
 
+function addNewStyle(newStyle) {
+  var styleElement = document.getElementById("styles_js");
+  if (!styleElement) {
+    styleElement = document.createElement("style");
+    styleElement.type = "text/css";
+    styleElement.id = "styles_js";
+    document.getElementsByTagName("head")[0].appendChild(styleElement);
+  }
+  styleElement.appendChild(document.createTextNode(newStyle));
+}
+
 const init = (left) => {
   const myCon = getElId("my-container");
   if (myCon) return;
@@ -42,6 +53,54 @@ const init = (left) => {
   if (leftMenu) {
     lmRect = leftMenu.getBoundingClientRect();
   }
+
+  // var sheet = document.styleSheets[0];
+  // console.log("sheet", sheet);
+  // sheet.insertRule("strong { color: red; }");
+
+  //style
+  addNewStyle(`.tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted black;
+  }
+  
+  .tooltip .tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: black;
+    color: #fff;
+    border-radius: 6px;
+    padding: 3px 0;
+  
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 1;
+
+    top: 100%;
+    left: 50%;
+    margin-left: -60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 15px;
+    width: 30px;
+  }
+  
+  .tooltip:hover .tooltiptext {
+    visibility: visible;
+  }`);
+
+  //font-awesome
+  const fasome = document.createElement("link");
+  fasome.setAttribute("rel", "stylesheet");
+  fasome.setAttribute(
+    "href",
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+  );
+  document.querySelector("head").append(fasome);
+  const icon = document.createElement("i");
+  icon.setAttribute("class", "fa fa-cloud");
 
   let container = document.createElement("div");
   container.setAttribute("id", "my-container");
@@ -81,6 +140,23 @@ function initEls(el) {
   divSupplies.append(CbSupplies);
   const labelSupplies = generateLabel("Supplies Develop", "cb-supplies");
   divSupplies.append(labelSupplies);
+
+  const tooltip = generateDiv();
+  tooltip.setAttribute("class", "tooltip");
+  const tooltiptext = generateDiv();
+  tooltiptext.setAttribute("class", "tooltiptext");
+  tooltiptext.innerText = "Test 123";
+
+  let iconInfo = document.createElement("i");
+  iconInfo.setAttribute("class", "fa fa-info");
+  iconInfo.style.fontSize = "14px";
+  iconInfo.style.marginLeft = "0px";
+  iconInfo.style.border = "1px solid #fff";
+  iconInfo.style.borderRadius = "100%";
+  iconInfo.style.padding = "4px";
+  tooltip.append(tooltiptext);
+  tooltip.append(iconInfo);
+  divSupplies.append(tooltip);
   el.append(divSupplies);
 
   const divLfbuildings = generateDiv();
