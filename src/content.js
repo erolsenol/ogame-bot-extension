@@ -516,16 +516,17 @@ async function start() {
   hasAttack();
 
   gameInitialize();
-  if (gameWayConditionCalc("standartDevelop")) {
-    await standartSuppliesDevelopment();
-  } else if (gameWayConditionCalc("lfbuildings")) {
-    await standartLfbuildingsDevelopment();
-  } else if (gameWayConditionCalc("message")) {
-    messageClear();
-  } else if (gameWayConditionCalc("attack")) {
+
+  if (gameWayConditionCalc("attack")) {
     await attackTarget();
   } else if (gameWayConditionCalc("spyGalaxy")) {
     await spyGalaxyStart();
+  } else if (gameWayConditionCalc("message")) {
+    messageClear();
+  } else if (gameWayConditionCalc("standartDevelop")) {
+    await standartSuppliesDevelopment();
+  } else if (gameWayConditionCalc("lfbuildings")) {
+    await standartLfbuildingsDevelopment();
   }
 }
 
