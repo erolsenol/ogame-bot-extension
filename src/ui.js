@@ -98,13 +98,18 @@ const init = (left) => {
   }`);
 
   //font-awesome
-  const fasome = document.createElement("link");
-  fasome.setAttribute("rel", "stylesheet");
-  fasome.setAttribute(
-    "href",
-    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
-  );
-  document.querySelector("head").append(fasome);
+  const myCss = getElId("my-css");
+  if (!myCss) {
+    const fasome = document.createElement("link");
+    fasome.setAttribute("rel", "stylesheet");
+    fasome.setAttribute("id", "my-css");
+    fasome.setAttribute(
+      "href",
+      "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    );
+    document.querySelector("head").append(fasome);
+  }
+
   const icon = document.createElement("i");
   icon.setAttribute("class", "fa fa-cloud");
 

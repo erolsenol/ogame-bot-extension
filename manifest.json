@@ -6,7 +6,7 @@
   "action": { "default_popup": "index.html" },
   "content_scripts": [
     {
-      "matches": ["https://*/*"],
+      "matches": ["https://*.gameforge.com/*"],
       "all_frames": true,
       "js": ["src/content.js"],
       "run_at": "document_end"

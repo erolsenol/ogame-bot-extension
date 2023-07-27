@@ -486,6 +486,7 @@ function hasAttack() {
   }
 }
 
+let galaxyLoadingCount = 0;
 async function start() {
   if (!window.location.origin.includes("ogame")) {
     return;
@@ -501,6 +502,11 @@ async function start() {
 
   const galaxyLoading = getElId("galaxyLoading");
   if (galaxyLoading && !galaxyLoading.hasAttribute("style")) {
+    galaxyLoadingCount += 1;
+    if (galaxyLoadingCount > 75) {
+      location.reload();
+      return;
+    }
     return;
   }
 
@@ -515,7 +521,7 @@ async function start() {
   } else if (gameWayConditionCalc("lfbuildings")) {
     await standartLfbuildingsDevelopment();
   } else if (gameWayConditionCalc("message")) {
-    await messageClear();
+    messageClear();
   } else if (gameWayConditionCalc("attack")) {
     await attackTarget();
   } else if (gameWayConditionCalc("spyGalaxy")) {
@@ -797,9 +803,19 @@ async function attackTarget() {
   const fleet1 = getElId("fleet1");
   if (!(fleet1.getAttribute("style") || "").includes("none")) {
     const ships = shipsChosen.querySelectorAll("li[class~='technology']");
+    const activeShipNamesEl = shipsChosen.querySelectorAll(
+      "li[data-status='on']"
+    );
+    const activeShipNames = [];
+    activeShipNamesEl.forEach((item) =>
+      activeShipNames.push(item.getAttribute("class").split(" ")[1])
+    );
     const transporterSmall = shipsChosen.querySelector(
       "li[class~='transporterSmall']"
     );
+    const activeShipCount = shipsChosen.querySelectorAll(
+      "li[data-status='on']"
+    ).length;
     const transporterLarge = shipsChosen.querySelector(
       "li[class~='transporterLarge']"
     );
@@ -822,20 +838,20 @@ async function attackTarget() {
       console.log("Not Found Ship");
       return;
     }
-    console.log("fleetcycle:", fleetcycle, fleetcycle % 2 == 0);
     if (
       transporterSmall.querySelector("input").value == totalTSmall &&
       fleetcycle % 2 == 0
     ) {
-      console.log("if true");
+      const randomShipNum = getRndInteger(0, activeShipNames.length - 1);
       for (let index = 0; index < ships.length; index++) {
         const ship = ships[index];
         if (
           ship.getAttribute("data-status") === "on" &&
-          !ship.getAttribute("class").includes("transporterSmall")
+          !ship.getAttribute("class").includes("transporterSmall") &&
+          ship.getAttribute("class").includes(activeShipNames[randomShipNum])
+          // && randomShipNum == index
         ) {
           console.log("focus:", ship.querySelector("input"));
-          ship.querySelector("input").parentElement.focus();
           ship.querySelector("input").focus();
           fleetcycle += 1;
           storageSet("fleetcycle", fleetcycle);
@@ -843,21 +859,22 @@ async function attackTarget() {
         }
       }
       if (fleetcycle > 10) {
-        console.log("fleetcycle > 5");
         storageSet("fleetcycle", 0);
-        await menuClick(8);
+        gamePlayStatus.message.status = 1;
+        gamePlayStatus.attack.status = 0;
+        storageSet("gamePlayStatus", gamePlayStatus);
         return;
       }
     } else {
-      console.log("if false");
       console.log("focus:", transporterSmall.querySelector("input"));
       fleetcycle += 1;
-      transporterSmall.querySelector("input").parentElement.focus();
       transporterSmall.querySelector("input").focus();
-      transporterSmall.querySelector("input").value = totalTSmall;
-      transporterSmall
-        .querySelector("input")
-        .setAttribute("value", totalTSmall);
+      setTimeout(() => {
+        transporterSmall.querySelector("input").value = totalTSmall;
+        transporterSmall
+          .querySelector("input")
+          .setAttribute("value", totalTSmall);
+      }, 500);
       return;
     }
 
