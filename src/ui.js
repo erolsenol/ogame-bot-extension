@@ -149,18 +149,16 @@ function initEls(el) {
   const divSupplies = generateDiv();
   const CbSupplies = generateInput("checkbox", "cb-supplies");
   CbSupplies.checked = gamePlayStatus.producers.status;
+  CbSupplies.style.border = `solid 1px ${CbSupplies.checked ? "green" : "red"}`;
   CbSupplies.addEventListener("input", function () {
     const gamePlayStatus = StorageGetInitialize(
       "gamePlayStatus",
       initGamePlayStatus
     );
-    if (CbSupplies.checked) {
-      gamePlayStatus.producers.status = 1;
-      labelSupplies.style.border = "solid 1px green";
-    } else {
-      gamePlayStatus.producers.status = 0;
-      labelSupplies.style.border = "solid 1px red";
-    }
+    gamePlayStatus.producers.status = CbSupplies.checked ? 1 : 0;
+    labelSupplies.style.border = `solid 1px ${
+      CbSupplies.checked ? "green" : "red"
+    }`;
     storageSet("gamePlayStatus", gamePlayStatus);
   });
   divSupplies.append(CbSupplies);
@@ -173,18 +171,18 @@ function initEls(el) {
   const divLfbuildings = generateDiv();
   const CbLfbuildings = generateInput("checkbox", "cb-lfbuildings");
   CbLfbuildings.checked = gamePlayStatus.lfbuildings.status;
+  CbLfbuildings.style.border = `solid 1px ${
+    CbLfbuildings.checked ? "green" : "red"
+  }`;
   CbLfbuildings.addEventListener("input", function () {
     const gamePlayStatus = StorageGetInitialize(
       "gamePlayStatus",
       initGamePlayStatus
     );
-    if (CbLfbuildings.checked) {
-      gamePlayStatus.lfbuildings.status = 1;
-      labelLfbuildings.style.border = "solid 1px green";
-    } else {
-      gamePlayStatus.lfbuildings.status = 0;
-      labelLfbuildings.style.border = "solid 1px red";
-    }
+    gamePlayStatus.lfbuildings.status = CbLfbuildings.checked ? 1 : 0;
+    labelLfbuildings.style.border = `solid 1px ${
+      CbLfbuildings.checked ? "green" : "red"
+    }`;
     storageSet("gamePlayStatus", gamePlayStatus);
   });
   divLfbuildings.append(CbLfbuildings);
@@ -196,6 +194,30 @@ function initEls(el) {
   const tooltipLf = generateTooltip("AA AA");
   divLfbuildings.append(tooltipLf);
   el.append(divLfbuildings);
+
+  const divDiscovery = generateDiv();
+  const CbDiscovery = generateInput("checkbox", "cb-discovery");
+  CbDiscovery.checked = gamePlayStatus.discovery.status;
+  CbDiscovery.style.border = `solid 1px ${
+    CbDiscovery.checked ? "green" : "red"
+  }`;
+  CbDiscovery.addEventListener("input", function () {
+    const gamePlayStatus = StorageGetInitialize(
+      "gamePlayStatus",
+      initGamePlayStatus
+    );
+    gamePlayStatus.discovery.status = CbDiscovery.checked ? 1 : 0;
+    labelDiscovery.style.border = `solid 1px ${
+      CbDiscovery.checked ? "green" : "red"
+    }`;
+    storageSet("gamePlayStatus", gamePlayStatus);
+  });
+  divDiscovery.append(CbDiscovery);
+  const labelDiscovery = generateLabel("Life Build Develop", "cb-discovery");
+  divDiscovery.append(labelDiscovery);
+  const tooltipDiscovery = generateTooltip("AA AA");
+  divDiscovery.append(tooltipDiscovery);
+  el.append(divDiscovery);
 
   const divSpyContainer = generateDiv();
   divSpyContainer.style.display = "flex";
@@ -225,7 +247,6 @@ function initEls(el) {
       storageSet("spySystemInterval", inputSpyInterval.value);
       return;
     }
-    console.log("return");
     inputSpyInterval.value = StorageGetInitialize("spySystemInterval", 30);
   });
   const labelSpyInterval = generateLabel("System Interval");
@@ -265,13 +286,10 @@ function initEls(el) {
       "messageSetting",
       initMessageSetting
     );
-    if (CbMessageDefence.checked) {
-      messageSetting.delDefence = true;
-      labelMessageDefence.style.border = "solid 1px green";
-    } else {
-      messageSetting.delDefence = false;
-      // labelMessageDefence.style.border = "solid 1px red";
-    }
+    messageSetting.delDefence = CbMessageDefence.checked;
+    labelMessageDefence.style.border = `solid 1px ${
+      CbMessageDefence.checked ? "green" : "red"
+    }`;
     storageSet("messageSetting", messageSetting);
   });
   divMessageDefence.append(CbMessageDefence);
@@ -290,13 +308,10 @@ function initEls(el) {
       "messageSetting",
       initMessageSetting
     );
-    if (CbMessageFleet.checked) {
-      messageSetting.delFleet = true;
-      labelMessageFleet.style.border = "solid 1px green";
-    } else {
-      messageSetting.delFleet = false;
-      // labelMessageFleet.style.border = "solid 1px red";
-    }
+    messageSetting.delFleet = CbMessageFleet.checked;
+    labelMessageFleet.style.border = `solid 1px ${
+      CbMessageFleet.checked ? "green" : "red"
+    }`;
     storageSet("messageSetting", messageSetting);
   });
   divMessageFleet.append(CbMessageFleet);
