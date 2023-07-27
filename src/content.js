@@ -503,7 +503,7 @@ async function start() {
   const galaxyLoading = getElId("galaxyLoading");
   if (galaxyLoading && !galaxyLoading.hasAttribute("style")) {
     galaxyLoadingCount += 1;
-    if (galaxyLoadingCount > 75) {
+    if (galaxyLoadingCount > 100) {
       location.reload();
       return;
     }
