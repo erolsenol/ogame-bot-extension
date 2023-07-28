@@ -5,6 +5,7 @@ import {
   storageSet,
   storageGet,
   StorageGetInitialize,
+  timestampToDate,
 } from "./helper";
 import {
   initResource,
@@ -164,7 +165,9 @@ function initEls(el) {
   divSupplies.append(CbSupplies);
   const labelSupplies = generateLabel("Supplies Develop", "cb-supplies");
   divSupplies.append(labelSupplies);
-  const tooltipSupplies = generateTooltip("AA AA");
+  const suppliesDate = timestampToDate(countdown.supplies);
+  console.log("suppliesDate", mathStabileRound((Date.now() + 3600) / 1000));
+  const tooltipSupplies = generateTooltip(suppliesDate);
   divSupplies.append(tooltipSupplies);
   el.append(divSupplies);
 
