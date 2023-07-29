@@ -37,16 +37,52 @@ export function isArrayEqual(val1, val2) {
   return isEqual;
 }
 
+function getActivePlanet() {
+  const planetList = getElId("planetList");
+
+  if (planetList && planetList.children.length > 1) {
+    const planetEls = planetList.querySelectorAll("div[class~='smallplanet']");
+    for (let index = 0; index < planetEls.length; index++) {
+      const planet = planetEls[index];
+      if (planet.getAttribute("class").includes("hightlightPlanet")) {
+        return index;
+      }
+    }
+  }
+  return 0;
+}
+
+function sSetMultiplePlanetFunc(value) {
+  const planetList = getElId("planetList");
+  if (planetList && planetList.children.length > 1) {
+    const activeIndex = getActivePlanet();
+    const calcValue = {};
+    calcValue[`planet_${activeIndex}`] = value;
+    return calcValue;
+  }
+  return value;
+}
+
 export function storageSet(key, value, ttl = 3600000) {
+  const calcValue = sSetMultiplePlanetFunc(value);
+
   const now = new Date();
 
   // `item` is an object which contains the original value
   // as well as the time when it's supposed to expire
   const item = {
-    value: value,
+    value: calcValue,
     expiry: now.getTime() + ttl,
   };
   localStorage.setItem(key, JSON.stringify(item));
+}
+function sGetMultiplePlanetFunc() {
+  const planetList = getElId("planetList");
+  if (planetList && planetList.children.length > 1) {
+    const activeIndex = getActivePlanet();
+    return `planet_${activeIndex}`;
+  }
+  return false;
 }
 export function storageGet(key) {
   const itemStr = localStorage.getItem(key);
@@ -63,6 +99,11 @@ export function storageGet(key) {
     // and return null
     localStorage.removeItem(key);
     return null;
+  }
+
+  const calcProperty = sGetMultiplePlanetFunc();
+  if (calcProperty) {
+    return item.value[calcProperty];
   }
 
   return item.value;

@@ -437,6 +437,7 @@ function uiInit() {
 setTimeout(uiInit, 1000);
 
 function gameInitialize() {
+  planetInitialize();
   getResources();
   getProducers();
   getFacilities();
@@ -445,7 +446,6 @@ function gameInitialize() {
   getShipyard();
   updateOvermark();
   getResourceGeneration();
-  planetInitialize();
 }
 
 async function planetInitialize() {
