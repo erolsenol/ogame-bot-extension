@@ -54,6 +54,8 @@ const init = (left) => {
   if (leftMenu) {
     lmRect = leftMenu.getBoundingClientRect();
   }
+  const body = document.querySelector("body");
+  body.style.height = "120%";
 
   // var sheet = document.styleSheets[0];
   // console.log("sheet", sheet);
@@ -63,15 +65,21 @@ const init = (left) => {
   addNewStyle(`
   .my-container i {
     font-size: 14px;
-    border: 1px solid #fff;
-    border-radius: 100%;
     padding: 4px;
   }
   
-  .tooltip {
-    position: relative;
+  .my-container .tooltip {
     display: inline-block;
     border-bottom: 1px dotted black;
+    position: absolute;
+    right: 6px;
+    width: 20px;
+    height: 20px;
+    border: 1px solid #fff;
+    border-radius: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
   
   .tooltip .tooltiptext {
@@ -87,7 +95,7 @@ const init = (left) => {
     z-index: 1;
 
     bottom: 30px;
-    margin-left: -43px;
+    margin-left: 0px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -118,7 +126,7 @@ const init = (left) => {
   container.setAttribute("id", "my-container");
   container.setAttribute("class", "my-container");
   container.style.zIndex = "2";
-  container.style.height = "350px";
+  container.style.height = "450px";
   container.style.width = "178px";
   container.style.position = "absolute";
   container.style.border = `solid 1px red`;
@@ -216,11 +224,34 @@ function initEls(el) {
     storageSet("gamePlayStatus", gamePlayStatus);
   });
   divDiscovery.append(CbDiscovery);
-  const labelDiscovery = generateLabel("Life Build Develop", "cb-discovery");
+  const labelDiscovery = generateLabel("To Discover", "cb-discovery");
   divDiscovery.append(labelDiscovery);
   const tooltipDiscovery = generateTooltip("AA AA");
   divDiscovery.append(tooltipDiscovery);
   el.append(divDiscovery);
+
+  const divAttack = generateDiv();
+  const CbAttack = generateInput("checkbox", "cb-attack");
+  CbAttack.checked =
+    gamePlayStatus.message.status || gamePlayStatus.attack.status;
+  CbAttack.style.border = `solid 1px ${CbAttack.checked ? "green" : "red"}`;
+  CbAttack.addEventListener("input", function () {
+    const gamePlayStatus = StorageGetInitialize(
+      "gamePlayStatus",
+      initGamePlayStatus
+    );
+    gamePlayStatus.message.status = CbAttack.checked ? 1 : 0;
+    labelAttack.style.border = `solid 1px ${
+      CbAttack.checked ? "green" : "red"
+    }`;
+    storageSet("gamePlayStatus", gamePlayStatus);
+  });
+  divAttack.append(CbAttack);
+  const labelAttack = generateLabel("Attack Active", "cb-attack");
+  divAttack.append(labelAttack);
+  const tooltipAttack = generateTooltip("AA AA");
+  divAttack.append(tooltipAttack);
+  el.append(divAttack);
 
   const divSpyContainer = generateDiv();
   divSpyContainer.style.display = "flex";
@@ -416,7 +447,7 @@ function generateInput(type, id) {
   const input = document.createElement("input");
   input.setAttribute("type", type);
   input.setAttribute("id", id);
-  input.style.marginLeft = "10px";
+  input.style.marginLeft = "5px";
   if (type == "checkbox") {
     input.style.width = "18px";
     input.style.height = "18px";
@@ -431,8 +462,8 @@ function generateLabel(text, forName = false) {
     label.setAttribute("for", forName);
   }
   label.style.fontSize = "12px";
-  label.style.marginLeft = "5px";
-  label.style.padding = "2px 8px";
+  label.style.marginLeft = "3px";
+  label.style.padding = "2px 5px 2px 3px";
   return label;
 }
 

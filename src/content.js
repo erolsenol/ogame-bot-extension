@@ -445,9 +445,35 @@ function gameInitialize() {
   getShipyard();
   updateOvermark();
   getResourceGeneration();
+  planetInitialize();
 }
 
-async function planetInitialize() {}
+async function planetInitialize() {
+  const planetList = getElId("planetList");
+  let activePlanetIndex = 0;
+  if (planetList && planetList.children.length > 1) {
+    storageSet("multiplePlanets", true, 360000000);
+    const planetEls = planetList.querySelectorAll("div[class~='smallplanet']");
+    for (let index = 0; index < planetEls.length; index++) {
+      const planet = planetEls[index];
+      if (planet.getAttribute("class").includes("hightlightPlanet")) {
+        activePlanetIndex = index;
+        break;
+      }
+    }
+  }
+  const countColonies = getElId("countColonies");
+  if (countColonies) {
+    const countText = countColonies.children[0].children[0].innerText;
+    const countArr = countText.split("/");
+    const colony = {
+      found: Number(countArr[0]),
+      available: Number(countArr[1]),
+      activeIndex: activePlanetIndex,
+    };
+    storageSet("colony", colony);
+  }
+}
 
 //attack
 function hasAttack() {
