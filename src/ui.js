@@ -75,11 +75,17 @@ const init = (left) => {
     right: 6px;
     width: 20px;
     height: 20px;
-    border: 1px solid #fff;
     border-radius: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
+  }
+
+  .my-container .b-green {
+    border: 1px solid green;
+  }
+  .my-container .b-red {
+    border: 1px solid red;
   }
   
   .tooltip .tooltiptext {
@@ -143,6 +149,11 @@ const init = (left) => {
 function generateTooltip(text) {
   const tooltip = document.createElement("div");
   tooltip.setAttribute("class", "tooltip");
+  if (text == "Ready") {
+    tooltip.classList.add("b-green");
+  } else {
+    tooltip.classList.add("b-red");
+  }
   const tooltiptext = document.createElement("div");
   tooltiptext.setAttribute("class", "tooltiptext");
   tooltiptext.innerText = text;
@@ -173,8 +184,7 @@ function initEls(el) {
   divSupplies.append(CbSupplies);
   const labelSupplies = generateLabel("Supplies Develop", "cb-supplies");
   divSupplies.append(labelSupplies);
-  const suppliesDate = timestampToDate(countdown.supplies);
-  console.log("suppliesDate", mathStabileRound((Date.now() + 3600) / 1000));
+  const suppliesDate = timestampToDate(countdown.producers);
   const tooltipSupplies = generateTooltip(suppliesDate);
   divSupplies.append(tooltipSupplies);
   el.append(divSupplies);
@@ -202,7 +212,8 @@ function initEls(el) {
     "cb-lfbuildings"
   );
   divLfbuildings.append(labelLfbuildings);
-  const tooltipLf = generateTooltip("AA AA");
+  const lfBuildingsDate = timestampToDate(countdown.lfbuildings);
+  const tooltipLf = generateTooltip(lfBuildingsDate);
   divLfbuildings.append(tooltipLf);
   el.append(divLfbuildings);
 
@@ -224,9 +235,10 @@ function initEls(el) {
     storageSet("gamePlayStatus", gamePlayStatus);
   });
   divDiscovery.append(CbDiscovery);
-  const labelDiscovery = generateLabel("To Discover", "cb-discovery");
+  const labelDiscovery = generateLabel("To Discovery", "cb-discovery");
   divDiscovery.append(labelDiscovery);
-  const tooltipDiscovery = generateTooltip("AA AA");
+  const discoveryDate = timestampToDate(countdown.discovery);
+  const tooltipDiscovery = generateTooltip(discoveryDate);
   divDiscovery.append(tooltipDiscovery);
   el.append(divDiscovery);
 
@@ -240,7 +252,12 @@ function initEls(el) {
       "gamePlayStatus",
       initGamePlayStatus
     );
-    gamePlayStatus.message.status = CbAttack.checked ? 1 : 0;
+    if (CbAttack.checked) {
+      gamePlayStatus.message.status = 1;
+    } else {
+      gamePlayStatus.message.status = 0;
+      gamePlayStatus.attack.status = 0;
+    }
     labelAttack.style.border = `solid 1px ${
       CbAttack.checked ? "green" : "red"
     }`;
@@ -249,7 +266,8 @@ function initEls(el) {
   divAttack.append(CbAttack);
   const labelAttack = generateLabel("Attack Active", "cb-attack");
   divAttack.append(labelAttack);
-  const tooltipAttack = generateTooltip("AA AA");
+  const attackDate = timestampToDate(countdown.message);
+  const tooltipAttack = generateTooltip(attackDate);
   divAttack.append(tooltipAttack);
   el.append(divAttack);
 

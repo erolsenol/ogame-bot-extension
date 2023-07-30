@@ -1,7 +1,13 @@
 import moment from "moment";
+import { initGamePlayStatus } from "../constant";
 
 export const timestampToDate = (time) => {
-  return moment.unix(time).format("DD-MM-YYYY hh:mm:ss");
+  if (mathStabileRound(new Date().getTime() / 1000) > time) {
+    return "Ready";
+  }
+
+  return moment.unix(time).format("DD/HH:mm");
+  // return moment.unix(time).format("DD HH:mm:ss");
 };
 
 export const getElId = (id) => {
@@ -52,19 +58,50 @@ function getActivePlanet() {
   return 0;
 }
 
-function sSetMultiplePlanetFunc(value) {
-  const planetList = getElId("planetList");
-  if (planetList && planetList.children.length > 1) {
-    const activeIndex = getActivePlanet();
-    const calcValue = {};
-    calcValue[`planet_${activeIndex}`] = value;
-    return calcValue;
+const planetSpecificFields = [
+  "producer",
+  "overmark",
+  "resource",
+  "gamePlayStatus",
+  "countdown",
+  "resourceGeneration",
+  "shipyard",
+];
+
+function sSetMultiplePlanetFunc(key, value) {
+  if (planetSpecificFields.includes(key)) {
+    const planetList = getElId("planetList");
+    if (planetList && planetList.children.length > 1) {
+      const activeIndex = getActivePlanet();
+      const calcValue = {};
+      calcValue[`planet_${activeIndex}`] = value;
+      return calcValue;
+    }
   }
   return value;
 }
 
 export function storageSet(key, value, ttl = 3600000) {
-  const calcValue = sSetMultiplePlanetFunc(value);
+  const calcValue = sSetMultiplePlanetFunc(key, value);
+  if (key === "gamePlayStatus") {
+    console.log(key, value);
+    // research
+    // message
+    // discovery
+    // attack
+    // spyGalaxy
+
+    const defaultGamePlayStatus = StorageGetInitialize(
+      "gamePlayStatus",
+      initGamePlayStatus
+    );
+    for (let item in value) {
+      console.log("item", item);
+      if (value[item].status) {
+      } else {
+      }
+    }
+  }
 
   const now = new Date();
 
@@ -76,11 +113,13 @@ export function storageSet(key, value, ttl = 3600000) {
   };
   localStorage.setItem(key, JSON.stringify(item));
 }
-function sGetMultiplePlanetFunc() {
-  const planetList = getElId("planetList");
-  if (planetList && planetList.children.length > 1) {
-    const activeIndex = getActivePlanet();
-    return `planet_${activeIndex}`;
+function sGetMultiplePlanetFunc(key) {
+  if (planetSpecificFields.includes(key)) {
+    const planetList = getElId("planetList");
+    if (planetList && planetList.children.length > 1) {
+      const activeIndex = getActivePlanet();
+      return `planet_${activeIndex}`;
+    }
   }
   return false;
 }
@@ -101,7 +140,7 @@ export function storageGet(key) {
     return null;
   }
 
-  const calcProperty = sGetMultiplePlanetFunc();
+  const calcProperty = sGetMultiplePlanetFunc(key);
   if (calcProperty) {
     return item.value[calcProperty];
   }
