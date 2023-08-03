@@ -567,7 +567,8 @@ async function CraftShipsOrDefenses(
   containerName,
   menuNumber,
   productName,
-  produceAmount
+  produceAmount,
+  technologyNumber
 ) {
   return new Promise(async (resolve, reject) => {
     const container = getElId(containerName);
@@ -602,15 +603,18 @@ async function CraftShipsOrDefenses(
       if (productionboxshipyardcomponent) {
         const tableEl = productionboxshipyardcomponent.querySelector("table");
         const firstA = tableEl.querySelector("a");
-        if (firstA.getAttribute("href").includes("210")) {
+        if (firstA.getAttribute("href").includes(technologyNumber)) {
           const count = Number(
             tableEl.querySelector("div[class='shipSumCount']").innerText
           );
           const shipyard = StorageGetInitialize("shipyard", initShipyard);
-          storageSet("shipyard", {
-            ...shipyard,
-            espionageProbe: shipyard.espionageProbe + count,
-          });
+          if (technologyNumber == "210") {
+            storageSet("shipyard", {
+              ...shipyard,
+              espionageProbe: shipyard.espionageProbe + count,
+            });
+          }
+
           return resolve(true);
         }
         // return resolve(true);
@@ -806,7 +810,10 @@ async function spyGalaxyStart() {
         .includes("status_abbr_vacation") &&
       !cellPlayerName.children[0]
         ?.getAttribute("class")
-        .includes("status_abbr_noob")
+        .includes("status_abbr_noob") &&
+      !cellPlayerName.children[0]
+        ?.getAttribute("class")
+        .includes("status_abbr_banned")
     ) {
       if (cellPlayerName.children.length > 1) {
         let symbols = cellPlayerName.children[1].querySelectorAll("span");
@@ -956,6 +963,7 @@ async function attackTarget() {
     );
 
     if (tpSmallCount < totalTSmall) {
+      // await CraftShipsOrDefenses("shipyard",6,'transporterSmall', 40, '202')
       countdown.message = now + 1200;
       storageSet("countdown", countdown);
       gamePlayStatus.message.status = 1;
