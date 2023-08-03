@@ -642,16 +642,22 @@ async function gameWayConditionCalc(type) {
 
   const keys = Object.keys(countdown);
   let time = 0;
+  let countdownSmallTimeKey = "";
   keys.forEach((item) => {
     if (countdown[item] - now > time) {
       time = now - countdown[item];
+      countdownSmallTimeKey = item;
     }
   });
 
   if (time > 0) console.log("time", time);
 
   if (
-    ["attack", "spyGalaxy", "message", "discovery", "research"].includes(type)
+    ["attack", "spyGalaxy", "message", "discovery", "research"].includes(
+      type
+    ) &&
+    time !== 0 &&
+    time < now
   ) {
     if (await changeActivePlanet(0)) {
       return;
@@ -674,6 +680,7 @@ async function gameWayConditionCalc(type) {
 
   return gamePlayStatus[type].status === 1 && countdown[type] < now;
 }
+
 async function galaxySystemRun() {
   return new Promise((resolve, reject) => {
     const galaxycomponent = getElId("galaxycomponent");
