@@ -153,4 +153,11 @@ export function StorageGetInitialize(name, value) {
   return item;
 }
 
+export const mouseEvent = new MouseEvent("click", {
+  view: window,
+  bubbles: true,
+  cancelable: true,
+  clientX: 20,
+});
+
 export default { storageSet, storageGet, StorageGetInitialize };

@@ -11,6 +11,7 @@ import {
   storageSet,
   storageGet,
   StorageGetInitialize,
+  mouseEvent,
 } from "./helper";
 
 import {
@@ -980,6 +981,8 @@ async function attackTarget() {
           ship.querySelector("input").focus();
           fleetcycle += 1;
           storageSet("fleetcycle", fleetcycle);
+          const military = getElId("military");
+          military.dispatchEvent(mouseEvent);
           break;
         }
       }
@@ -999,6 +1002,10 @@ async function attackTarget() {
         transporterSmall
           .querySelector("input")
           .setAttribute("value", totalTSmall);
+        setTimeout(() => {
+          const military = getElId("military");
+          military.dispatchEvent(mouseEvent);
+        }, 400);
       }, 500);
       return;
     }
