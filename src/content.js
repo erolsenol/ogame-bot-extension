@@ -986,7 +986,7 @@ async function attackTarget() {
           break;
         }
       }
-      if (fleetcycle > 10) {
+      if (fleetcycle > 14) {
         storageSet("fleetcycle", 0);
         gamePlayStatus.message.status = 1;
         gamePlayStatus.attack.status = 0;
