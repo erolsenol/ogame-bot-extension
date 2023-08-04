@@ -55,7 +55,7 @@ const init = (left) => {
     lmRect = leftMenu.getBoundingClientRect();
   }
   const body = document.querySelector("body");
-  body.style.height = "120%";
+  body.style.height = "140%";
 
   // var sheet = document.styleSheets[0];
   // console.log("sheet", sheet);
@@ -132,7 +132,7 @@ const init = (left) => {
   container.setAttribute("id", "my-container");
   container.setAttribute("class", "my-container");
   container.style.zIndex = "2";
-  container.style.height = "450px";
+  container.style.height = "550px";
   container.style.width = "178px";
   container.style.position = "absolute";
   container.style.border = `solid 1px red`;
@@ -447,27 +447,82 @@ function initEls(el) {
 
   el.append(divAttackContainer);
 
-  console.log("12312312312312");
-
   const divContainerCraftShip = generateDiv();
+  divContainerCraftShip.style.border = "1px solid red";
+
   const divCraftShip = generateDiv();
+  divCraftShip.flexDirection = "row";
+  divCraftShip.style.marginTop = "5px";
   const labelCraftship = generateLabel("Ships", "select-ship");
   divCraftShip.append(labelCraftship);
-  const selectShip = generateSelectbox("select-ship", ["1", "2", "3", "4"]);
+  const selectShip = generateSelectbox("select-ship", [
+    "Select",
+    "fighterLight",
+    "fighterHeavy",
+    "cruiser",
+    "battleship",
+    "interceptor",
+    "bomber",
+    "destroyer",
+    "deathstar",
+    "reaper",
+    "explorer",
+    "transporterSmall",
+    "transporterLarge",
+    "colonyShip",
+    "recycler",
+    "espionageProbe",
+    "solarSatellite",
+    "resbuggy",
+  ]);
   divCraftShip.append(selectShip);
-
   divContainerCraftShip.append(divCraftShip);
+  const inputShipCount = generateInput("text", "input-ship-count");
+  divContainerCraftShip.append(inputShipCount);
   el.append(divContainerCraftShip);
+
+  const divContainerCraftDefence = generateDiv();
+  divContainerCraftDefence.style.border = "1px solid red";
+  const divCraftDefence = generateDiv();
+  divCraftDefence.flexDirection = "row";
+  divCraftDefence.style.marginTop = "5px";
+  const labelCraftDefence = generateLabel("Defences", "select-ship");
+  divCraftDefence.append(labelCraftDefence);
+  const selectDefence = generateSelectbox("select-defence", [
+    "Select",
+    "rocketLauncher",
+    "laserCannonLight",
+    "laserCannonHeavy",
+    "gaussCannon",
+    "ionCannon",
+    "plasmaCannon",
+    "shieldDomeSmall",
+    "shieldDomeLarge",
+    "missileInterceptor",
+    "missileInterplanetary",
+  ]);
+  divCraftDefence.append(selectDefence);
+  divContainerCraftDefence.append(divCraftDefence);
+
+  el.append(divContainerCraftDefence);
 }
 
 function generateSelectbox(id, options) {
   const select = document.createElement("select");
-  select.style.height = "45px";
+  select.style.height = "25px";
+  select.style.width = "100%";
+  select.style.fontSize = "14px";
+  select.style.marginRight = "5px";
+  select.style.marginLeft = "5px";
   select.id = id;
 
   options.forEach((item) => {
     const option = document.createElement("option");
     option.setAttribute("value", item);
+    option.style.fontSize = "14px";
+    option.style.paddingTop = "6px";
+    option.style.paddingBottom = "4px";
+    // option.style.marginTop = "3px";
     option.innerText = item;
     select.append(option);
   });
