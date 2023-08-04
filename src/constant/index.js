@@ -130,6 +130,19 @@ export const initShipyard = {
   resbuggy: 0,
 };
 
+export const initDefense = {
+  rocketLauncher: 0,
+  laserCannonLight: 0,
+  laserCannonHeavy: 0,
+  gaussCannon: 0,
+  ionCannon: 0,
+  plasmaCannon: 0,
+  shieldDomeSmall: 0,
+  shieldDomeLarge: 0,
+  missileInterceptor: 0,
+  missileInterplanetary: 0,
+};
+
 export const initMessageSetting = {
   delDefence: false,
   delFleet: false,
@@ -160,7 +173,6 @@ export const initSpyGalaxy = {
     system: 0,
   },
 };
-
 
 export const initCraftShip = {
   name: "",
