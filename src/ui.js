@@ -245,7 +245,9 @@ function initEls(el) {
   const divAttack = generateDiv();
   const CbAttack = generateInput("checkbox", "cb-attack");
   CbAttack.checked =
-    gamePlayStatus.message.status || gamePlayStatus.attack.status;
+    gamePlayStatus.message.status ||
+    gamePlayStatus.attack.status ||
+    gamePlayStatus.spyGalaxy.status;
   CbAttack.style.border = `solid 1px ${CbAttack.checked ? "green" : "red"}`;
   CbAttack.addEventListener("input", function () {
     const gamePlayStatus = StorageGetInitialize(
