@@ -447,8 +447,29 @@ function initEls(el) {
 
   el.append(divAttackContainer);
 
-  const divClickTime = generateDiv();
-  const inputClickTime = generateInput("text", "cb-lfbuildings");
+  const divContainerCraftShip = generateDiv();
+  const divCraftShip = generateDiv();
+  const labelCraftship = generateLabel("Ships", "select-ship");
+  divCraftShip.append(labelCraftship);
+  const selectShip = generateSelectbox("select-ship", ["1", "2", "3", "4"]);
+  divCraftShip.append(selectShip);
+
+  divContainerCraftShip.append(divCraftShip);
+  el.append(divContainerCraftShip);
+}
+
+function generateSelectbox(id, options) {
+  const select = document.createElement("select");
+  select.id = id;
+
+  options.forEach((item) => {
+    const option = document.createElement("option");
+    option.setAttribute("value", item);
+    option.innerText = item;
+    select.append(option);
+  });
+
+  return select;
 }
 
 function generateButton(text) {

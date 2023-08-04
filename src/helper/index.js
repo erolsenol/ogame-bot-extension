@@ -160,4 +160,44 @@ export const mouseEvent = new MouseEvent("click", {
   clientX: 20,
 });
 
+export function dispatchKeyboardEvent(type, code, key, charCode, keyCode) {
+  const keyboardEvent = new KeyboardEvent(type, {
+    code: code,
+    key: key,
+    charCode: charCode,
+    keyCode: keyCode,
+    view: window,
+    bubbles: true,
+    cancelable: true,
+  });
+
+  return keyboardEvent;
+}
+
+var ev = new KeyboardEvent("keydown", {
+  altKey: false,
+  bubbles: true,
+  cancelBubble: false,
+  cancelable: true,
+  charCode: 0,
+  code: "Enter",
+  composed: true,
+  ctrlKey: false,
+  currentTarget: null,
+  defaultPrevented: true,
+  detail: 0,
+  eventPhase: 0,
+  isComposing: false,
+  isTrusted: true,
+  key: "Enter",
+  keyCode: 13,
+  location: 0,
+  metaKey: false,
+  repeat: false,
+  returnValue: false,
+  shiftKey: false,
+  type: "keydown",
+  which: 13,
+});
+
 export default { storageSet, storageGet, StorageGetInitialize };

@@ -12,6 +12,7 @@ import {
   storageGet,
   StorageGetInitialize,
   mouseEvent,
+  dispatchKeyboardEvent,
 } from "./helper";
 
 import {
@@ -28,6 +29,7 @@ import {
   initTarget,
   initSpyGalaxy,
   initMyPlanetAttack,
+  initCraftShip,
 } from "./constant";
 
 console.log("content");
@@ -545,7 +547,9 @@ async function start() {
 
   gameInitialize();
 
-  if (await gameWayConditionCalc("attack")) {
+  if (await gameWayConditionCalc("shipyard")) {
+    await attackTarget();
+  } else if (await gameWayConditionCalc("attack")) {
     await attackTarget();
   } else if (await gameWayConditionCalc("spyGalaxy")) {
     await spyGalaxyStart();
@@ -560,6 +564,17 @@ async function start() {
   } else if (await gameWayConditionCalc("research")) {
     console.log("research function not found");
   }
+}
+
+async function CraftShip() {
+  return new Promise(async (resolve, reject) => {
+    const craftShip = StorageGetInitialize("craftShip", initCraftShip);
+    if (!craftShip.status) {
+      return resolve(true);
+    }
+
+    return resolve(true);
+  });
 }
 
 //CraftShipsOrDefenses
@@ -624,8 +639,19 @@ async function CraftShipsOrDefenses(
       if (build_amount.value != produceAmount) {
         build_amount.setAttribute("value", produceAmount);
         build_amount.value = produceAmount;
+        setTimeout(() => {
+          const enterEvent = dispatchKeyboardEvent(
+            "keydown",
+            "Enter",
+            "Enter",
+            13,
+            13
+          );
+          build_amount.dispatchEvent(enterEvent);
+        }, 350);
         return resolve(true);
       }
+
       const upgradeBtn = technologydetails_wrapper.querySelector(
         "button[class='upgrade']"
       );
