@@ -447,6 +447,8 @@ function initEls(el) {
 
   el.append(divAttackContainer);
 
+  console.log("12312312312312");
+
   const divContainerCraftShip = generateDiv();
   const divCraftShip = generateDiv();
   const labelCraftship = generateLabel("Ships", "select-ship");
@@ -460,6 +462,7 @@ function initEls(el) {
 
 function generateSelectbox(id, options) {
   const select = document.createElement("select");
+  select.style.height = "45px";
   select.id = id;
 
   options.forEach((item) => {
