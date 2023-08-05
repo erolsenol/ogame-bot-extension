@@ -1,4 +1,6 @@
 // import "./src/content";
+// import robot from "robotjs";
+// console.log("robot", robot);
 
 function selectTab() {
   chrome.tabs.query({}, function (tabs) {

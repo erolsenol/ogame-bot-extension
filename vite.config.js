@@ -6,4 +6,8 @@ import manifest from "./manifest.json" assert { type: "json" }; // Node >=17
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue(), crx({ manifest })],
+  // optimizeDeps: {
+  //   include: ["esm-dep > cjs-dep"],
+  //   exclude: ["fsevents"],
+  // },
 });

@@ -1102,7 +1102,7 @@ async function attackTarget() {
         return;
       }
     } else {
-      sendMessageServiceWorker("attackShipInput");
+      await sendMessageServiceWorker("attackShipInput");
       console.log("focus:", transporterSmall.querySelector("input"));
       fleetcycle += 1;
       transporterSmall.querySelector("input").focus();
@@ -1179,12 +1179,16 @@ async function sendMessageServiceWorker(
       payload: payload,
     };
 
-    chrome.runtime.sendMessage(message, function (response) {
-      console.log(response);
-      if (response === "OK") {
-        return resolve(true);
-      }
-    });
+    console.log("chrome", chrome);
+    if (typeof chrome.app.isInstalled !== "undefined") {
+      chrome.runtime.sendMessage(message, function (response) {
+        if (response === "OK") {
+          return resolve(true);
+        }
+      });
+    } else {
+      return resolve(false);
+    }
   });
 }
 
