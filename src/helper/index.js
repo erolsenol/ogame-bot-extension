@@ -66,6 +66,7 @@ const planetSpecificFields = [
   "countdown",
   "resourceGeneration",
   "shipyard",
+  "craft",
 ];
 
 function sSetMultiplePlanetFunc(key, value) {
