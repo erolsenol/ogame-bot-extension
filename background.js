@@ -1,3 +1,5 @@
+// import "./src/content";
+
 function selectTab() {
   chrome.tabs.query({}, function (tabs) {
     console.log("tabs", tabs);
@@ -22,6 +24,7 @@ function selectTab() {
 
 function setTabOgame() {
   chrome.tabs.query({}, function (tabs) {
+    console.log("tabs", tabs);
     for (var i = 0; i < tabs.length; i++) {
       if (tabs[i].url.includes("ogame") && tabs[i].url.includes("game")) {
         chrome.tabs.update(tabs[i].id, { selected: true });
@@ -31,17 +34,24 @@ function setTabOgame() {
   });
 }
 
-self.addEventListener("message", (event) => {
-  if (event.data.type === "triggerFunction") {
-    triggerFunction(event.data.payload);
-  } else if (event.data.type === "attackShipInput") {
-    setTabOgame();
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  if (sender.url.includes("ogame")) {
+    console.log("onMessage", { request, sender, sendResponse });
+    if (request.type === "attackShipInput") {
+      setTabOgame();
+    }
+    sendResponse("OK");
+  } else {
+    sendResponse("REJECT");
   }
 });
 
-function triggerFunction(payload) {
-  console.log("Function triggered with payload:", payload);
-}
+// self.addEventListener("message", (event) => {
+//   if (event.data.type === "triggerFunction") {
+// console.log("Function triggered with payload:", payload);
+//   } else if (event.data.type === "attackShipInput") {
+//   }
+// });
 
 //Testingg >>>
 

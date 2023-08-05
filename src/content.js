@@ -1152,16 +1152,40 @@ async function attackTarget() {
   }
 }
 
-function sendMessageServiceWorker(type = "triggerFunction", payload = {}) {
-  // Bir mesaj oluşturun
-  const message = {
-    type: type,
-    payload: payload,
-  };
+// navigator.serviceWorker.register example
+// if ("serviceWorker" in navigator) {
+//   window.addEventListener("load", () => {
+//     console.log("load completed");
+//     navigator.serviceWorker
+//       .register("background.js")
+//       .then((registration) => {
+//         console.log("Service Worker registered:", registration);
+//         // Hizmet çalışanı başarılı bir şekilde kaydedildi, burada controller değeri artık null olmamalıdır.
+//         // Bundan sonra mesaj göndermeye devam edebilirsiniz.
+//       })
+//       .catch((error) => {
+//         console.error("Service Worker registration failed:", error);
+//       });
+//   });
+// }
 
-  // Mesajı hizmet çalışanına gönderin
-  console.log("navigator", navigator);
-  navigator.serviceWorker.controller.postMessage(message);
+async function sendMessageServiceWorker(
+  type = "triggerFunction",
+  payload = {}
+) {
+  return new Promise((resolve, reject) => {
+    const message = {
+      type: type,
+      payload: payload,
+    };
+
+    chrome.runtime.sendMessage(message, function (response) {
+      console.log(response);
+      if (response === "OK") {
+        return resolve(true);
+      }
+    });
+  });
 }
 
 const mInfoFleetText = "Filolar: ";
