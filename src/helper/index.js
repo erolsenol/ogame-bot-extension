@@ -1,3 +1,15 @@
+import moment from "moment";
+import { initGamePlayStatus } from "../constant";
+
+export const timestampToDate = (time) => {
+  if (mathStabileRound(new Date().getTime() / 1000) > time) {
+    return "Ready";
+  }
+
+  return moment.unix(time).format("DD/HH:mm");
+  // return moment.unix(time).format("DD HH:mm:ss");
+};
+
 export const getElId = (id) => {
   const element = document.getElementById(id);
 
@@ -31,16 +43,86 @@ export function isArrayEqual(val1, val2) {
   return isEqual;
 }
 
+function getActivePlanet() {
+  const planetList = getElId("planetList");
+
+  if (planetList && planetList.children.length > 1) {
+    const planetEls = planetList.querySelectorAll("div[class~='smallplanet']");
+    for (let index = 0; index < planetEls.length; index++) {
+      const planet = planetEls[index];
+      if (planet.getAttribute("class").includes("hightlightPlanet")) {
+        return index;
+      }
+    }
+  }
+  return 0;
+}
+
+const planetSpecificFields = [
+  "producer",
+  "overmark",
+  "resource",
+  "gamePlayStatus",
+  "countdown",
+  "resourceGeneration",
+  "shipyard",
+  "craft",
+];
+
+function sSetMultiplePlanetFunc(key, value) {
+  if (planetSpecificFields.includes(key)) {
+    const planetList = getElId("planetList");
+    if (planetList && planetList.children.length > 1) {
+      const activeIndex = getActivePlanet();
+      const calcValue = {};
+      calcValue[`planet_${activeIndex}`] = value;
+      return calcValue;
+    }
+  }
+  return value;
+}
+
 export function storageSet(key, value, ttl = 3600000) {
+  const calcValue = sSetMultiplePlanetFunc(key, value);
+  if (key === "gamePlayStatus") {
+    console.log(key, value);
+    // research
+    // message
+    // discovery
+    // attack
+    // spyGalaxy
+
+    const defaultGamePlayStatus = StorageGetInitialize(
+      "gamePlayStatus",
+      initGamePlayStatus
+    );
+    for (let item in value) {
+      console.log("item", item);
+      if (value[item].status) {
+      } else {
+      }
+    }
+  }
+
   const now = new Date();
 
   // `item` is an object which contains the original value
   // as well as the time when it's supposed to expire
   const item = {
-    value: value,
+    value: calcValue,
     expiry: now.getTime() + ttl,
   };
   localStorage.setItem(key, JSON.stringify(item));
+}
+function sGetMultiplePlanetFunc(key) {
+  if (planetSpecificFields.includes(key)) {
+    const planetList = getElId("planetList");
+    if (planetList && planetList.children.length > 1) {
+      const activeIndex = getActivePlanet();
+      return `planet_${activeIndex}`;
+    }
+  }
+  return false;
 }
 export function storageGet(key) {
   const itemStr = localStorage.getItem(key);
@@ -59,6 +141,11 @@ export function storageGet(key) {
     return null;
   }
 
+  const calcProperty = sGetMultiplePlanetFunc(key);
+  if (calcProperty) {
+    return item.value[calcProperty];
+  }
+
   return item.value;
 }
 export function StorageGetInitialize(name, value) {
@@ -66,5 +153,52 @@ export function StorageGetInitialize(name, value) {
   if (!item) item = value;
   return item;
 }
+
+export const mouseEvent = new MouseEvent("click", {
+  view: window,
+  bubbles: true,
+  cancelable: true,
+  clientX: 20,
+});
+
+export function dispatchKeyboardEvent(type, code, key, charCode, keyCode) {
+  const keyboardEvent = new KeyboardEvent(type, {
+    code: code,
+    key: key,
+    charCode: charCode,
+    keyCode: keyCode,
+    view: window,
+    bubbles: true,
+    cancelable: true,
+  });
+
+  return keyboardEvent;
+}
+
+var ev = new KeyboardEvent("keydown", {
+  altKey: false,
+  bubbles: true,
+  cancelBubble: false,
+  cancelable: true,
+  charCode: 0,
+  code: "Enter",
+  composed: true,
+  ctrlKey: false,
+  currentTarget: null,
+  defaultPrevented: true,
+  detail: 0,
+  eventPhase: 0,
+  isComposing: false,
+  isTrusted: true,
+  key: "Enter",
+  keyCode: 13,
+  location: 0,
+  metaKey: false,
+  repeat: false,
+  returnValue: false,
+  shiftKey: false,
+  type: "keydown",
+  which: 13,
+});
 
 export default { storageSet, storageGet, StorageGetInitialize };

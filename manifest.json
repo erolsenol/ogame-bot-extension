@@ -2,11 +2,24 @@
   "name": "my-ex",
   "version": "0.0.1",
   "manifest_version": 3,
-  "permissions": ["tabs", "scripting", "webNavigation", "activeTab", "storage"],
+  "permissions": [
+    "tabs",
+    "tabGroups",
+    "contextMenus",
+    "scripting",
+    "webNavigation",
+    "storage",
+    "offscreen"
+  ],
   "action": { "default_popup": "index.html" },
+  "minimum_chrome_version": "92",
+  "background": {
+    "service_worker": "./background.js",
+    "type": "module"
+  },
   "content_scripts": [
     {
-      "matches": ["https://*/*"],
+      "matches": ["https://*.gameforge.com/*"],
       "all_frames": true,
       "js": ["src/content.js"],
       "run_at": "document_end"
