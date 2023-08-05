@@ -1179,8 +1179,11 @@ async function sendMessageServiceWorker(
       payload: payload,
     };
 
-    console.log("chrome", chrome);
-    if (typeof chrome.app.isInstalled !== "undefined") {
+    if (
+      chrome &&
+      chrome.runtime &&
+      chrome.runtime.hasOwnProperty("sendMessage")
+    ) {
       chrome.runtime.sendMessage(message, function (response) {
         if (response === "OK") {
           return resolve(true);
@@ -1280,9 +1283,9 @@ async function messageClear() {
         msgFleetPoint = Number(msgFleetText.replace("m", "")) * 1000;
       } else {
         try {
-          console.log("msgFleetText", msgFleetText);
           msgFleetPoint = Number(msgFleetText);
         } catch (error) {
+          console.log("msgFleetText error:", error);
           messageEl
             .querySelector(".fright")
             .querySelector("a")
@@ -1300,9 +1303,9 @@ async function messageClear() {
         msgDefencePoint = Number(msgDefenceText.replace("m", "")) * 1000;
       } else {
         try {
-          console.log("msgDefenceText", msgDefenceText);
           msgDefencePoint = Number(msgDefenceText);
         } catch (error) {
+          console.log("msgDefenceText error:", error);
           messageEl
             .querySelector(".fright")
             .querySelector("a")
