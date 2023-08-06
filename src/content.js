@@ -554,17 +554,16 @@ async function start() {
 
   if (await gameWayConditionCalc("craft")) {
     await CraftShip();
-  } else if (await gameWayConditionCalc("attack")) {
-    console.log("attack");
-    await attackTarget();
-  } else if (await gameWayConditionCalc("spyGalaxy")) {
-    await spyGalaxyStart();
-  } else if (await gameWayConditionCalc("message")) {
-    await messageClear();
   } else if (await gameWayConditionCalc("discovery")) {
     console.log("discovery function not found");
+  } else if (await gameWayConditionCalc("attack")) {
+    await attackTarget();
+  } else if (await gameWayConditionCalc("message")) {
+    await messageClear();
   } else if (await gameWayConditionCalc("standartDevelop")) {
     await standartSuppliesDevelopment();
+  } else if (await gameWayConditionCalc("spyGalaxy")) {
+    await spyGalaxyStart();
   } else if (await gameWayConditionCalc("lfbuildings")) {
     await standartLfbuildingsDevelopment();
   } else if (await gameWayConditionCalc("research")) {
