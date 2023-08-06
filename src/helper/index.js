@@ -232,4 +232,34 @@ var ev = new KeyboardEvent("keydown", {
   which: 13,
 });
 
-export default { storageSet, storageGet, StorageGetInitialize };
+const createCustomKeyboardEvent = (keyValue) => {
+  const eventOptions = {
+    bubbles: true, // Eğer doğruysa, olay üst elemandan aşağıya doğru yayılır
+    cancelable: true, // Olayın iptal edilebilir olup olmadığını belirler
+    key: keyValue, // Klavye tuşunun değeri (örn. '1' veya '6')
+  };
+
+  // Eğer tarayıcı klavye olaylarını desteklemiyorsa, KeyboardEvent'i düşük seviyeli şekilde oluşturun
+  if (typeof KeyboardEvent === "function") {
+    return new KeyboardEvent("keydown", eventOptions);
+  } else {
+    const event = document.createEvent("KeyboardEvent");
+    event.initKeyEvent(
+      "keypress",
+      true,
+      true,
+      window,
+      keyValue,
+      0,
+      "",
+      false,
+      ""
+    );
+    return event;
+  }
+};
+
+export const simulateKeyPress = (key) => {
+  const customEvent = createCustomKeyboardEvent(key);
+  document.dispatchEvent(customEvent);
+};

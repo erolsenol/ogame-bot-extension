@@ -14,6 +14,7 @@ import {
   StorageGetInitialize,
   mouseEvent,
   dispatchKeyboardEvent,
+  simulateKeyPress,
 } from "./helper";
 
 import {
@@ -1403,16 +1404,21 @@ async function discoveryStart() {
           const position = getElId("position");
           if (position) {
             position.focus();
-            position.value = "16";
-            position.setAttribute("value", "16");
+            // position.value = "16";
+            // position.setAttribute("value", "16");
             console.log("input set 16");
             setTimeout(() => {
-              const button15 = getElId("button15");
-              if (button15) {
-                button15.children[0].click();
-              }
-              return resolve(true);
+              simulateKeyPress("1");
+            }, 350);
+            setTimeout(() => {
+              simulateKeyPress("6");
             }, 750);
+            setTimeout(() => {
+              const missionNameWrapper = getElId("missionNameWrapper");
+              if (missionNameWrapper) {
+                missionNameWrapper.dispatchEvent(mouseEvent);
+              }
+            }, 950);
           }
         }
       }
