@@ -2,6 +2,7 @@ import qs from "qs";
 import $ from "jquery";
 import init from "./ui";
 import {
+  timeout,
   getElId,
   strToNumber,
   mathStabileRound,
@@ -738,7 +739,6 @@ async function gameWayConditionCalc(type) {
   if (time > 0) console.log("time", time);
 
   if (type === "standartDevelop") {
-    console.log("qqqq");
     let remainingTime = 0;
     if (hasDevelopment) {
       const keys = Object.keys(countdown);
@@ -752,8 +752,11 @@ async function gameWayConditionCalc(type) {
     }
     console.log("countdown.producers", countdown.producers);
     console.log("now", now, countdown.producers < now);
+    //incorrect
+    await timeout(100);
     if (gamePlayStatus.producers.status && countdown.producers < now) {
       console.log("returnnnnn 11");
+
       return true;
     }
     const planetList = getElId("planetList");
@@ -776,9 +779,10 @@ async function gameWayConditionCalc(type) {
         console.log(
           "planet index:",
           index,
+          "producers.status:",
           otherGamePlayStatus.producers.status,
-          otherCountdown.producers < now,
-          activePlanet !== index
+          "producers < now",
+          otherCountdown.producers < now
         );
         if (
           otherGamePlayStatus.producers.status &&

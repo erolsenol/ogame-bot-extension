@@ -1,6 +1,9 @@
 import moment from "moment";
 import { initCountdown, initGamePlayStatus, initResource } from "../constant";
 
+export const timeout = (time) =>
+  new Promise((resolve) => setTimeout(() => resolve(), time));
+
 export const timestampToDate = (time) => {
   if (mathStabileRound(new Date().getTime() / 1000) > time) {
     return "Ready";
