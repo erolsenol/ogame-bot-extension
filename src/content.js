@@ -1391,12 +1391,6 @@ async function discoveryStart() {
       const sendFleet = getElId("sendFleet");
       if (sendFleet && !sendFleet.getAttribute("class").includes("off")) {
         sendFleet.children[0].click();
-        target.attacked = true;
-        storageSet("target", target);
-        gamePlayStatus.message.status = 1;
-        gamePlayStatus.attack.status = 0;
-        storageSet("gamePlayStatus", gamePlayStatus);
-        storageSet("fleetcycle", 0);
         console.log("second click");
         return resolve(true);
       } else {
