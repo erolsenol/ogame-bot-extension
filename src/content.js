@@ -560,7 +560,7 @@ async function start() {
   } else if (await gameWayConditionCalc("spyGalaxy")) {
     await spyGalaxyStart();
   } else if (await gameWayConditionCalc("message")) {
-    messageClear();
+    await messageClear();
   } else if (await gameWayConditionCalc("discovery")) {
     console.log("discovery function not found");
   } else if (await gameWayConditionCalc("standartDevelop")) {
