@@ -725,7 +725,6 @@ async function gameWayConditionCalc(type) {
   );
   const now = mathStabileRound(Date.now() / 1000);
   const countdown = StorageGetInitialize("countdown", initCountdown);
-  console.log("countdown", countdown);
 
   const keys = Object.keys(countdown);
   let time = 0;
