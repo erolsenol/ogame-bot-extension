@@ -438,7 +438,7 @@ function uiInit() {
     init(document.querySelector("body"));
   }
 }
-setTimeout(uiInit, 1000);
+setTimeout(uiInit, 500);
 
 function gameInitialize() {
   planetInitialize();
@@ -463,6 +463,7 @@ async function planetInitialize() {
       const planet = planetEls[index];
       if (planet.getAttribute("class").includes("hightlightPlanet")) {
         activePlanetIndex = index;
+        storageSet("activePlanet", activePlanetIndex, 360000000);
         break;
       }
     }
@@ -548,9 +549,12 @@ async function start() {
 
   gameInitialize();
 
+  console.log("11");
+
   if (await gameWayConditionCalc("craft")) {
     await CraftShip();
   } else if (await gameWayConditionCalc("attack")) {
+    console.log("attack");
     await attackTarget();
   } else if (await gameWayConditionCalc("spyGalaxy")) {
     await spyGalaxyStart();
@@ -559,12 +563,14 @@ async function start() {
   } else if (await gameWayConditionCalc("discovery")) {
     console.log("discovery function not found");
   } else if (await gameWayConditionCalc("standartDevelop")) {
+    console.log("standartDevelop");
     await standartSuppliesDevelopment();
   } else if (await gameWayConditionCalc("lfbuildings")) {
     await standartLfbuildingsDevelopment();
   } else if (await gameWayConditionCalc("research")) {
     console.log("research function not found");
   }
+  console.log("99");
 }
 
 async function CraftShip() {
@@ -734,18 +740,6 @@ async function gameWayConditionCalc(type) {
 
   if (time > 0) console.log("time", time);
 
-  if (
-    ["attack", "spyGalaxy", "message", "discovery", "research"].includes(
-      type
-    ) &&
-    time !== 0 &&
-    time < now
-  ) {
-    if (await changeActivePlanet(0)) {
-      return;
-    }
-  }
-
   if (type === "standartDevelop") {
     let remainingTime = 0;
     if (hasDevelopment) {
@@ -757,7 +751,48 @@ async function gameWayConditionCalc(type) {
       });
       return gamePlayStatus.producers.status && remainingTime < now;
     }
-    return gamePlayStatus.producers.status && countdown.producers < now;
+    if (gamePlayStatus.producers.status && countdown.producers < now) {
+      return true;
+    }
+    const planetList = getElId("planetList");
+
+    if (planetList) {
+      for (let index = 0; index < planetList.children.length; index++) {
+        const planet = planetList.children[index];
+        const otherGamePlayStatus = StorageGetInitialize(
+          "gamePlayStatus",
+          initGamePlayStatus,
+          index
+        );
+        const otherCountdown = StorageGetInitialize(
+          "countdown",
+          initCountdown,
+          index
+        );
+
+        const activePlanet = StorageGetInitialize("activePlanet", 0);
+        console.log(
+          index,
+          otherGamePlayStatus.producers.status,
+          otherCountdown.producers < now,
+          activePlanet !== index
+        );
+        if (
+          otherGamePlayStatus.producers.status &&
+          otherCountdown.producers < now &&
+          activePlanet !== index
+        ) {
+          if (!planet.getAttribute("class").includes("hightlightPlanet")) {
+            console.log("12312 changeActivePlanet index", index);
+            await changeActivePlanet(index);
+          }
+
+          return true;
+        }
+      }
+      return false;
+    }
+    return false;
   } else if (type === "craft") {
     const craft = StorageGetInitialize("craft", []);
     return (
@@ -767,6 +802,18 @@ async function gameWayConditionCalc(type) {
       // craft[0].endTime < now &&
       craft[0].remainingTime < now
     );
+  } else if (
+    ["attack", "spyGalaxy", "message", "discovery", "research"].includes(
+      type
+    ) &&
+    time !== 0 &&
+    time < now &&
+    gamePlayStatus[type].status === 1
+  ) {
+    console.log("trigger 123123 changeActivePlanet(0)");
+    if (false && (await changeActivePlanet(0))) {
+      return false;
+    }
   }
 
   return gamePlayStatus[type].status === 1 && countdown[type] < now;
@@ -1085,7 +1132,6 @@ async function attackTarget() {
           ship.getAttribute("class").includes(activeShipNames[randomShipNum])
           // && randomShipNum == index
         ) {
-          console.log("focus:", ship.querySelector("input"));
           ship.querySelector("input").focus();
           fleetcycle += 1;
           storageSet("fleetcycle", fleetcycle);
@@ -1103,7 +1149,6 @@ async function attackTarget() {
       }
     } else {
       await sendMessageServiceWorker("attackShipInput");
-      console.log("focus:", transporterSmall.querySelector("input"));
       fleetcycle += 1;
       transporterSmall.querySelector("input").focus();
       setTimeout(() => {
@@ -1133,7 +1178,6 @@ async function attackTarget() {
       setTimeout(() => {
         continueToFleet2.children[0].click();
       }, 500);
-      console.log("first click");
       return;
     }
   }
@@ -1146,7 +1190,6 @@ async function attackTarget() {
     gamePlayStatus.message.status = 1;
     gamePlayStatus.attack.status = 0;
     storageSet("gamePlayStatus", gamePlayStatus);
-    console.log("second click");
     storageSet("fleetcycle", 0);
     return;
   }
@@ -2103,7 +2146,7 @@ async function changeActivePlanet(planetNum) {
         console.log(`we currently do not have ${planetNum} planets`);
         return resolve(false);
       }
-
+      console.log("change planet index:", planetNum);
       if (
         !planetList.children[planetNum]
           .getAttribute("class")

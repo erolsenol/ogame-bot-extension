@@ -1,5 +1,5 @@
 import moment from "moment";
-import { initGamePlayStatus } from "../constant";
+import { initCountdown, initGamePlayStatus } from "../constant";
 
 export const timestampToDate = (time) => {
   if (mathStabileRound(new Date().getTime() / 1000) > time) {
@@ -84,21 +84,34 @@ function sSetMultiplePlanetFunc(key, value) {
 
 export function storageSet(key, value, ttl = 3600000) {
   const calcValue = sSetMultiplePlanetFunc(key, value);
-  if (key === "gamePlayStatus") {
-    console.log(key, value);
-    // research
-    // message
-    // discovery
-    // attack
-    // spyGalaxy
-
-    const defaultGamePlayStatus = StorageGetInitialize(
-      "gamePlayStatus",
-      initGamePlayStatus
-    );
-    for (let item in value) {
-      if (value[item].status) {
-      } else {
+  const planetCount = StorageGetInitialize("planetCount", -1);
+  if (
+    key === "gamePlayStatus" &&
+    Object.keys(calcValue)[0].includes("planet_")
+  ) {
+    if ("producers" in value) {
+      for (let index = 0; index <= planetCount; index++) {
+        if (`planet_${index}` in calcValue) {
+          calcValue[`planet_${index}`].producers = value["producers"];
+        } else {
+          const val = StorageGetInitialize(
+            "gamePlayStatus",
+            initGamePlayStatus,
+            index
+          );
+          val.producers = value["producers"];
+          calcValue[`planet_${index}`] = val;
+        }
+      }
+    }
+  } else if (
+    key === "countdown" &&
+    Object.keys(calcValue)[0].includes("planet_")
+  ) {
+    for (let index = 0; index <= planetCount; index++) {
+      if (!(`planet_${index}` in calcValue)) {
+        const val = StorageGetInitialize("countdown", initCountdown, index);
+        calcValue[`planet_${index}`] = val;
       }
     }
   }
@@ -123,7 +136,7 @@ function sGetMultiplePlanetFunc(key) {
   }
   return false;
 }
-export function storageGet(key) {
+export function storageGet(key, planetNum = false) {
   const itemStr = localStorage.getItem(key);
   // if the item doesn't exist, return null
   if (!itemStr) {
@@ -141,14 +154,16 @@ export function storageGet(key) {
   }
 
   const calcProperty = sGetMultiplePlanetFunc(key);
-  if (calcProperty) {
+  if (planetNum !== false) {
+    return item.value[`planet_${planetNum}`];
+  } else if (calcProperty) {
     return item.value[calcProperty];
   }
 
   return item.value;
 }
-export function StorageGetInitialize(name, value) {
-  let item = storageGet(name);
+export function StorageGetInitialize(name, value, planetNum = false) {
+  let item = storageGet(name, planetNum);
   if (!item) item = value;
   return item;
 }
