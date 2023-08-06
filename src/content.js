@@ -452,6 +452,7 @@ async function gameInitialize() {
   getShipyard();
   updateOvermark();
   getResourceGeneration();
+  await timeout(250);
 }
 
 async function planetInitialize() {
@@ -549,7 +550,7 @@ async function start() {
 
   hasAttack();
 
-  gameInitialize();
+  await gameInitialize();
 
   if (await gameWayConditionCalc("craft")) {
     await CraftShip();
@@ -725,6 +726,7 @@ async function gameWayConditionCalc(type) {
   );
   const now = mathStabileRound(Date.now() / 1000);
   const countdown = StorageGetInitialize("countdown", initCountdown);
+  console.log("countdown", countdown);
 
   const keys = Object.keys(countdown);
   let time = 0;
@@ -751,12 +753,12 @@ async function gameWayConditionCalc(type) {
       return gamePlayStatus.producers.status && remainingTime < now;
     }
     console.log("countdown.producers", countdown.producers);
+    console.log("diffrent", countdown.producers - now);
     console.log("now", now, countdown.producers < now);
     //incorrect
     await timeout(100);
     if (gamePlayStatus.producers.status && countdown.producers < now) {
       console.log("returnnnnn 11");
-
       return true;
     }
     const planetList = getElId("planetList");
