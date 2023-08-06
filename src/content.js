@@ -413,6 +413,7 @@ function hasError() {
 
 function hasLogin() {
   const joinGame = getElId("joinGame");
+  console.log("joinGame", joinGame);
   if (joinGame) {
     joinGame.children[1].click();
     return false;
@@ -440,7 +441,8 @@ function uiInit() {
 }
 setTimeout(uiInit, 500);
 
-function gameInitialize() {
+async function gameInitialize() {
+  await sendMessageServiceWorker("tabClear");
   planetInitialize();
   getResources();
   getProducers();

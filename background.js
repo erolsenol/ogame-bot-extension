@@ -24,6 +24,25 @@ function selectTab() {
   });
 }
 
+function tabClear() {
+  chrome.tabs.query({}, function (tabs) {
+    console.log("tabs", tabs);
+    let found = false;
+    let tabIds = [];
+    for (var i = 0; i < tabs.length; i++) {
+      if (tabs[i].url.search("ogame") > -1 && tabs[i].url.search("game") > -1) {
+        found = true;
+        tabIds.push(tabs[i].id);
+      }
+    }
+    if (found && tabIds.length > 1) {
+      for (let index = 1; index < tabIds.length; index++) {
+        chrome.tabs.remove(tabIds[index], function () {});
+      }
+    }
+  });
+}
+
 function setTabOgame() {
   chrome.tabs.query({}, function (tabs) {
     console.log("tabs", tabs);
@@ -41,6 +60,8 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     console.log("onMessage", { request, sender, sendResponse });
     if (request.type === "attackShipInput") {
       setTabOgame();
+    } else if (request.type === "tabClear") {
+      tabClear();
     }
     sendResponse("OK");
   } else {
