@@ -17,6 +17,11 @@ export const getElId = (id) => {
 };
 
 export const strToNumber = (str) => {
+  if (str.includes("m")) {
+    return Number(str.replaceAll("m", "").replaceAll(".", "")) * 1000;
+  } else if (str.includes("b")) {
+    return Number(str.replaceAll("b", "").replaceAll(".", "")) * 1000 * 1000;
+  }
   return Number(str.replaceAll(".", ""));
 };
 
@@ -105,7 +110,9 @@ export function storageSet(key, value, ttl = 3600000) {
       }
     }
   } else if (
-    (key === "countdown" || key === "resource") &&
+    (key === "countdown" ||
+      key === "resource" ||
+      key === "resourceGeneration") &&
     Object.keys(calcValue)[0].includes("planet_")
   ) {
     for (let index = 0; index <= planetCount; index++) {
@@ -115,6 +122,8 @@ export function storageSet(key, value, ttl = 3600000) {
           val = StorageGetInitialize("countdown", initCountdown, index);
         } else if (key === "resource") {
           val = StorageGetInitialize("resource", initResource, index);
+        } else if (key === "resourceGeneration") {
+          val = StorageGetInitialize("resourceGeneration", initResource, index);
         }
         calcValue[`planet_${index}`] = val;
       }

@@ -1321,6 +1321,8 @@ async function messageClear() {
       let msgFleetPoint = 0;
       if (msgFleetText.includes("m")) {
         msgFleetPoint = Number(msgFleetText.replace("m", "")) * 1000;
+      } else if (msgFleetText.includes("b")) {
+        msgDefencePoint = Number(msgFleetText.replace("b", "")) * 1000 * 1000;
       } else {
         try {
           msgFleetPoint = Number(msgFleetText);
@@ -1341,6 +1343,8 @@ async function messageClear() {
       let msgDefencePoint = 0;
       if (msgDefenceText.includes("m")) {
         msgDefencePoint = Number(msgDefenceText.replace("m", "")) * 1000;
+      } else if (msgDefenceText.includes("b")) {
+        msgDefencePoint = Number(msgDefenceText.replace("b", "")) * 1000 * 1000;
       } else {
         try {
           msgDefencePoint = Number(msgDefenceText);
