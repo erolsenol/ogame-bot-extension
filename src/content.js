@@ -555,7 +555,7 @@ async function start() {
   if (await gameWayConditionCalc("craft")) {
     await CraftShip();
   } else if (await gameWayConditionCalc("discovery")) {
-    console.log("discovery function not found");
+    await discoveryStart();
   } else if (await gameWayConditionCalc("attack")) {
     await attackTarget();
   } else if (await gameWayConditionCalc("message")) {
@@ -1000,6 +1000,12 @@ async function attackTarget() {
 
   const shipsChosen = getElId("shipsChosen");
   if (!shipsChosen) {
+    const fleet1 = getElId("fleet1");
+    if (fleet1) {
+      //fleet tab on ships not found
+      console.log("fleet tab on ships not found");
+      return resolve(true);
+    }
     await menuClick(8);
     return;
   }
@@ -1187,6 +1193,232 @@ async function attackTarget() {
       return;
     }
   }
+}
+
+async function discoveryStart() {
+  return new Promise(async (resolve, reject) => {
+    const gamePlayStatus = StorageGetInitialize(
+      "gamePlayStatus",
+      initGamePlayStatus
+    );
+    const now = mathStabileRound(Date.now() / 1000);
+    console.log("discoveryStart");
+    const shipsChosen = getElId("shipsChosen");
+
+    if (!shipsChosen) {
+      const fleet1 = getElId("fleet1");
+      if (fleet1) {
+        //fleet tab on ships not found
+        console.log("fleet tab on ships not found");
+        return resolve(true);
+      }
+      await menuClick(8);
+      return resolve(true);
+    }
+
+    const eventContent = getElId("eventContent");
+    const eventContentTrArr = eventContent.querySelectorAll("tr");
+
+    const slots = document
+      .querySelector(".fleetStatus")
+      .querySelector("#slots");
+    //check
+    if (slots && false) {
+      const fleetEl = slots.children[0];
+      const discoveryEl = slots.children[1];
+
+      const fleetText = fleetEl.innerText
+        .replaceAll(" ", "")
+        .replace(spanFleetText, "");
+      const discoveryText = discoveryEl.innerText
+        .replaceAll(" ", "")
+        .replace(spanDiscoveryText, "");
+
+      const fleetNumArr = fleetText.split("/");
+      const discoveryNumArr = discoveryText.split("/");
+
+      const currentFleetCount = Number(fleetNumArr[0]);
+      const maxFleetCount = Number(fleetNumArr[1]);
+      const currentDiscoveryCount = Number(discoveryNumArr[0]);
+      const maxDiscoveryCount = Number(discoveryNumArr[1]);
+
+      if (currentFleetCount >= maxFleetCount) {
+        for (let index = 0; index < eventContentTrArr.length; index++) {
+          const eventRow = eventContentTrArr[index];
+
+          if (
+            eventRow.getAttribute("data-mission-type") == "1" &&
+            eventRow.getAttribute("data-return-flight") == "true"
+          ) {
+            const firstFleetReturnTime = Number(
+              eventRow.getAttribute("data-arrival-time")
+            );
+            countdown.message = firstFleetReturnTime + getRndInteger(120, 300);
+            storageSet("countdown", countdown);
+            gamePlayStatus.message.status = 1;
+            gamePlayStatus.attack.status = 0;
+            storageSet("gamePlayStatus", gamePlayStatus);
+            console.log("fleet slot Full");
+            return;
+          }
+        }
+
+        // countdown.message = now + 1200;
+        // storageSet("countdown", countdown);
+        // gamePlayStatus.message.status = 1;
+        // gamePlayStatus.attack.status = 0;
+        // storageSet("gamePlayStatus", gamePlayStatus);
+        console.log("Fleet Full");
+        return;
+      }
+    }
+
+    const fleet1 = getElId("fleet1");
+    if (!(fleet1.getAttribute("style") || "").includes("none")) {
+      const ships = shipsChosen.querySelectorAll("li[class~='technology']");
+      const activeShipNamesEl = shipsChosen.querySelectorAll(
+        "li[data-status='on']"
+      );
+      const activeShipNames = [];
+      activeShipNamesEl.forEach((item) =>
+        activeShipNames.push(item.getAttribute("class").split(" ")[1])
+      );
+      const transporterSmall = shipsChosen.querySelector(
+        "li[class~='transporterSmall']"
+      );
+      const activeShipCount = shipsChosen.querySelectorAll(
+        "li[data-status='on']"
+      ).length;
+      const transporterLarge = shipsChosen.querySelector(
+        "li[class~='transporterLarge']"
+      );
+      const totalTSmall = mathStabileRound(100);
+
+      const tpSmallCount = Number(
+        transporterSmall.children[0].children[0].children[0].innerText
+      );
+
+      if (tpSmallCount < totalTSmall) {
+        // await CraftShipsOrDefenses("shipyard",6,'transporterSmall', 40, '202')
+        // countdown.message = now + 1200;
+        // gamePlayStatus.message.status = 1;
+        gamePlayStatus.craft.status = 1;
+        const craft = StorageGetInitialize("craft", []);
+        const craftData = {
+          name: "transporterSmall",
+          produceAmount: totalTSmall + 10,
+          technologyNumber: "202",
+          status: false,
+          produced: false,
+          type: "shipyard",
+          repeat: false,
+          remainingTime: 0,
+          endTime: 0,
+        };
+        craft.push(craftData);
+        storageSet("craft", craft);
+        storageSet("countdown", countdown);
+        storageSet("gamePlayStatus", gamePlayStatus);
+        console.log("Not Found Ship");
+        return;
+      }
+      if (
+        transporterSmall.querySelector("input").value == totalTSmall &&
+        fleetcycle % 2 == 0
+      ) {
+        const randomShipNum = getRndInteger(0, activeShipNames.length - 1);
+        for (let index = 0; index < ships.length; index++) {
+          const ship = ships[index];
+          if (
+            ship.getAttribute("data-status") === "on" &&
+            !ship.getAttribute("class").includes("transporterSmall") &&
+            ship.getAttribute("class").includes(activeShipNames[randomShipNum])
+            // && randomShipNum == index
+          ) {
+            ship.querySelector("input").focus();
+            fleetcycle += 1;
+            storageSet("fleetcycle", fleetcycle);
+            const military = getElId("military");
+            military.dispatchEvent(mouseEvent);
+            break;
+          }
+        }
+        if (fleetcycle > 14) {
+          storageSet("fleetcycle", 0);
+          location.reload();
+          return resolve(true);
+        }
+      } else {
+        await sendMessageServiceWorker("attackShipInput");
+        fleetcycle += 1;
+        transporterSmall.querySelector("input").focus();
+        setTimeout(() => {
+          transporterSmall.querySelector("input").value = totalTSmall;
+          transporterSmall
+            .querySelector("input")
+            .setAttribute("value", totalTSmall);
+          setTimeout(() => {
+            const military = getElId("military");
+            military.dispatchEvent(mouseEvent);
+          }, 400);
+        }, 500);
+        return resolve(true);
+      }
+
+      //ship not found
+      const warning = fleet1.querySelector("#warning");
+      if (warning) {
+        console.log("ship not found");
+      }
+    }
+
+    const fleet2 = getElId("fleet2");
+    if ((fleet2.getAttribute("style") || "").includes("none")) {
+      const continueToFleet2 = getElId("continueToFleet2");
+      if (!continueToFleet2.getAttribute("class").includes("off")) {
+        setTimeout(() => {
+          continueToFleet2.children[0].click();
+          console.log("first click");
+        }, 500);
+        return;
+      } else {
+        console.log("second click not active");
+      }
+    }
+    // if (false)
+    else {
+      const sendFleet = getElId("sendFleet");
+      if (sendFleet && !sendFleet.getAttribute("class").includes("off")) {
+        sendFleet.children[0].click();
+        target.attacked = true;
+        storageSet("target", target);
+        gamePlayStatus.message.status = 1;
+        gamePlayStatus.attack.status = 0;
+        storageSet("gamePlayStatus", gamePlayStatus);
+        storageSet("fleetcycle", 0);
+        console.log("second click");
+        return resolve(true);
+      } else {
+        if (sendFleet && sendFleet.getAttribute("class").includes("off")) {
+          const position = getElId("position");
+          if (position) {
+            position.focus();
+            position.value = "16";
+            position.setAttribute("value", "16");
+            console.log("input set 16");
+            setTimeout(() => {
+              const button15 = getElId("button15");
+              if (button15) {
+                button15.children[0].click();
+              }
+              return resolve(true);
+            }, 750);
+          }
+        }
+      }
+    }
+    return resolve(true);
+  });
 }
 
 // navigator.serviceWorker.register example
