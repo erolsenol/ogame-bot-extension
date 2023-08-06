@@ -562,7 +562,6 @@ async function start() {
   } else if (await gameWayConditionCalc("discovery")) {
     console.log("discovery function not found");
   } else if (await gameWayConditionCalc("standartDevelop")) {
-    console.log("standartDevelop");
     await standartSuppliesDevelopment();
   } else if (await gameWayConditionCalc("lfbuildings")) {
     await standartLfbuildingsDevelopment();
@@ -739,6 +738,7 @@ async function gameWayConditionCalc(type) {
   if (time > 0) console.log("time", time);
 
   if (type === "standartDevelop") {
+    console.log("qqqq");
     let remainingTime = 0;
     if (hasDevelopment) {
       const keys = Object.keys(countdown);
@@ -747,9 +747,13 @@ async function gameWayConditionCalc(type) {
           remainingTime = countdown[key];
         }
       });
+      console.log("returnnnnn");
       return gamePlayStatus.producers.status && remainingTime < now;
     }
+    console.log("countdown.producers", countdown.producers);
+    console.log("now", now, countdown.producers < now);
     if (gamePlayStatus.producers.status && countdown.producers < now) {
+      console.log("returnnnnn 11");
       return true;
     }
     const planetList = getElId("planetList");
@@ -785,7 +789,7 @@ async function gameWayConditionCalc(type) {
             console.log("12312 changeActivePlanet index", index);
             await changeActivePlanet(index);
           }
-
+          console.log("returnnnnn 22");
           return true;
         }
       }
@@ -1449,7 +1453,6 @@ async function messageClear() {
 async function standartSuppliesDevelopment() {
   const { metalMine, crystalMine, deuteriumSynthesizer, solarPlant } =
     storageGet("producer") || {};
-
   const producersEl = getElId("producers");
 
   if (metalMine === 0) {
