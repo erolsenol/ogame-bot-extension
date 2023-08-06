@@ -1,5 +1,5 @@
 import moment from "moment";
-import { initCountdown, initGamePlayStatus } from "../constant";
+import { initCountdown, initGamePlayStatus, initResource } from "../constant";
 
 export const timestampToDate = (time) => {
   if (mathStabileRound(new Date().getTime() / 1000) > time) {
@@ -105,12 +105,17 @@ export function storageSet(key, value, ttl = 3600000) {
       }
     }
   } else if (
-    key === "countdown" &&
+    (key === "countdown" || key === "resource") &&
     Object.keys(calcValue)[0].includes("planet_")
   ) {
     for (let index = 0; index <= planetCount; index++) {
       if (!(`planet_${index}` in calcValue)) {
-        const val = StorageGetInitialize("countdown", initCountdown, index);
+        let val = null;
+        if (key === "countdown") {
+          val = StorageGetInitialize("countdown", initCountdown, index);
+        } else if (key === "resource") {
+          val = StorageGetInitialize("resource", initResource, index);
+        }
         calcValue[`planet_${index}`] = val;
       }
     }

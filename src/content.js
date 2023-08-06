@@ -549,8 +549,6 @@ async function start() {
 
   gameInitialize();
 
-  console.log("11");
-
   if (await gameWayConditionCalc("craft")) {
     await CraftShip();
   } else if (await gameWayConditionCalc("attack")) {
@@ -570,7 +568,6 @@ async function start() {
   } else if (await gameWayConditionCalc("research")) {
     console.log("research function not found");
   }
-  console.log("99");
 }
 
 async function CraftShip() {
@@ -772,6 +769,7 @@ async function gameWayConditionCalc(type) {
 
         const activePlanet = StorageGetInitialize("activePlanet", 0);
         console.log(
+          "planet index:",
           index,
           otherGamePlayStatus.producers.status,
           otherCountdown.producers < now,
@@ -810,8 +808,7 @@ async function gameWayConditionCalc(type) {
     time < now &&
     gamePlayStatus[type].status === 1
   ) {
-    console.log("trigger 123123 changeActivePlanet(0)");
-    if (false && (await changeActivePlanet(0))) {
+    if (await changeActivePlanet(0)) {
       return false;
     }
   }
@@ -2146,7 +2143,6 @@ async function changeActivePlanet(planetNum) {
         console.log(`we currently do not have ${planetNum} planets`);
         return resolve(false);
       }
-      console.log("change planet index:", planetNum);
       if (
         !planetList.children[planetNum]
           .getAttribute("class")
