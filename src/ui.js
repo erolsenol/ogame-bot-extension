@@ -285,7 +285,11 @@ function initEls(el) {
     gamePlayStatus.defense.status ||
     gamePlayStatus.craft.status;
   CbCraft.style.border = `solid 1px ${CbCraft.checked ? "green" : "red"}`;
-  // CbCraft.addEventListener("input", function () {});
+  CbCraft.addEventListener("input", function () {
+    if (!CbCraft.checked) {
+      storageSet("craft", []);
+    }
+  });
   divCraft.append(CbCraft);
   const labelCraft = generateLabel("Craft Active", "cb-craft");
   divCraft.append(labelCraft);
