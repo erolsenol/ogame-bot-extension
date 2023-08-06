@@ -38,7 +38,7 @@ function tabClear() {
     if (found && tabIds.length > 1) {
       for (let index = 0; index < tabIds.length; index++) {
         if (index !== 1) {
-          chrome.tabs.remove(tabIds[index], function () {});
+          // chrome.tabs.remove(tabIds[index], function () {});
         }
       }
     }
