@@ -747,16 +747,12 @@ async function gameWayConditionCalc(type) {
           remainingTime = countdown[key];
         }
       });
-      console.log("returnnnnn");
+
       return gamePlayStatus.producers.status && remainingTime < now;
     }
-    console.log("countdown.producers", countdown.producers);
-    console.log("diffrent", countdown.producers - now);
-    console.log("now", now, countdown.producers < now);
     //incorrect
     await timeout(100);
     if (gamePlayStatus.producers.status && countdown.producers < now) {
-      console.log("returnnnnn 11");
       return true;
     }
     const planetList = getElId("planetList");
@@ -776,24 +772,14 @@ async function gameWayConditionCalc(type) {
         );
 
         const activePlanet = StorageGetInitialize("activePlanet", 0);
-        console.log(
-          "planet index:",
-          index,
-          "producers.status:",
-          otherGamePlayStatus.producers.status,
-          "producers < now",
-          otherCountdown.producers < now
-        );
         if (
           otherGamePlayStatus.producers.status &&
           otherCountdown.producers < now &&
           activePlanet !== index
         ) {
           if (!planet.getAttribute("class").includes("hightlightPlanet")) {
-            console.log("12312 changeActivePlanet index", index);
             await changeActivePlanet(index);
           }
-          console.log("returnnnnn 22");
           return true;
         }
       }
@@ -1190,14 +1176,16 @@ async function attackTarget() {
   // if (false)
   else {
     const sendFleet = getElId("sendFleet");
-    sendFleet.children[0].click();
-    target.attacked = true;
-    storageSet("target", target);
-    gamePlayStatus.message.status = 1;
-    gamePlayStatus.attack.status = 0;
-    storageSet("gamePlayStatus", gamePlayStatus);
-    storageSet("fleetcycle", 0);
-    return;
+    if (sendFleet && !sendFleet.getAttribute("class").includes("off")) {
+      sendFleet.children[0].click();
+      target.attacked = true;
+      storageSet("target", target);
+      gamePlayStatus.message.status = 1;
+      gamePlayStatus.attack.status = 0;
+      storageSet("gamePlayStatus", gamePlayStatus);
+      storageSet("fleetcycle", 0);
+      return;
+    }
   }
 }
 
