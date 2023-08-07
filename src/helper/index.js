@@ -185,7 +185,7 @@ export function StorageGetInitialize(name, value, planetNum = false) {
   return item;
 }
 
-export const mouseEvent = new MouseEvent("click", {
+export const createMouseEvent = new MouseEvent("click", {
   view: window,
   bubbles: true,
   cancelable: true,
@@ -275,7 +275,7 @@ export default {
   storageSet,
   storageGet,
   StorageGetInitialize,
-  mouseEvent,
+  createMouseEvent,
   dispatchKeyboardEvent,
   createCustomKeyboardEvent,
   simulateKeyPress,

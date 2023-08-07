@@ -12,7 +12,7 @@ import {
   storageSet,
   storageGet,
   StorageGetInitialize,
-  mouseEvent,
+  createMouseEvent,
   dispatchKeyboardEvent,
   simulateKeyPress,
 } from "./helper";
@@ -1135,7 +1135,7 @@ async function attackTarget() {
           fleetcycle += 1;
           storageSet("fleetcycle", fleetcycle);
           const military = getElId("military");
-          military.dispatchEvent(mouseEvent);
+          military.dispatchEvent(createMouseEvent);
           break;
         }
       }
@@ -1157,7 +1157,7 @@ async function attackTarget() {
           .setAttribute("value", totalTSmall);
         setTimeout(() => {
           const military = getElId("military");
-          military.dispatchEvent(mouseEvent);
+          military.dispatchEvent(createMouseEvent);
         }, 400);
       }, 500);
       return;
@@ -1340,7 +1340,7 @@ async function discoveryStart() {
             fleetcycle += 1;
             storageSet("fleetcycle", fleetcycle);
             const military = getElId("military");
-            military.dispatchEvent(mouseEvent);
+            military.dispatchEvent(createMouseEvent);
             break;
           }
         }
@@ -1360,7 +1360,7 @@ async function discoveryStart() {
             .setAttribute("value", totalTSmall);
           setTimeout(() => {
             const military = getElId("military");
-            military.dispatchEvent(mouseEvent);
+            military.dispatchEvent(createMouseEvent);
           }, 400);
         }, 500);
         return resolve(true);
@@ -1410,7 +1410,7 @@ async function discoveryStart() {
             setTimeout(() => {
               const missionNameWrapper = getElId("missionNameWrapper");
               if (missionNameWrapper) {
-                missionNameWrapper.dispatchEvent(mouseEvent);
+                missionNameWrapper.dispatchEvent(createMouseEvent);
               }
             }, 950);
           }
