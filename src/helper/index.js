@@ -263,3 +263,20 @@ export const simulateKeyPress = (key) => {
   const customEvent = createCustomKeyboardEvent(key);
   document.dispatchEvent(customEvent);
 };
+
+export default {
+  timeout,
+  timestampToDate,
+  getElId,
+  strToNumber,
+  mathStabileRound,
+  isNumeric,
+  isArrayEqual,
+  storageSet,
+  storageGet,
+  StorageGetInitialize,
+  mouseEvent,
+  dispatchKeyboardEvent,
+  createCustomKeyboardEvent,
+  simulateKeyPress,
+};
