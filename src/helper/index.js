@@ -1,5 +1,8 @@
 import moment from "moment";
-import { initGamePlayStatus } from "../constant";
+import { initCountdown, initGamePlayStatus, initResource } from "../constant";
+
+export const timeout = (time) =>
+  new Promise((resolve) => setTimeout(() => resolve(), time));
 
 export const timestampToDate = (time) => {
   if (mathStabileRound(new Date().getTime() / 1000) > time) {
@@ -17,6 +20,11 @@ export const getElId = (id) => {
 };
 
 export const strToNumber = (str) => {
+  if (str.includes("m")) {
+    return Number(str.replaceAll("m", "").replaceAll(".", "")) * 1000;
+  } else if (str.includes("b")) {
+    return Number(str.replaceAll("b", "").replaceAll(".", "")) * 1000 * 1000;
+  }
   return Number(str.replaceAll(".", ""));
 };
 
@@ -84,21 +92,43 @@ function sSetMultiplePlanetFunc(key, value) {
 
 export function storageSet(key, value, ttl = 3600000) {
   const calcValue = sSetMultiplePlanetFunc(key, value);
-  if (key === "gamePlayStatus") {
-    console.log(key, value);
-    // research
-    // message
-    // discovery
-    // attack
-    // spyGalaxy
-
-    const defaultGamePlayStatus = StorageGetInitialize(
-      "gamePlayStatus",
-      initGamePlayStatus
-    );
-    for (let item in value) {
-      if (value[item].status) {
-      } else {
+  const planetCount = StorageGetInitialize("planetCount", -1);
+  if (
+    key === "gamePlayStatus" &&
+    Object.keys(calcValue)[0].includes("planet_")
+  ) {
+    if ("producers" in value) {
+      for (let index = 0; index <= planetCount; index++) {
+        if (`planet_${index}` in calcValue) {
+          calcValue[`planet_${index}`].producers = value["producers"];
+        } else {
+          const val = StorageGetInitialize(
+            "gamePlayStatus",
+            initGamePlayStatus,
+            index
+          );
+          val.producers = value["producers"];
+          calcValue[`planet_${index}`] = val;
+        }
+      }
+    }
+  } else if (
+    (key === "countdown" ||
+      key === "resource" ||
+      key === "resourceGeneration") &&
+    Object.keys(calcValue)[0].includes("planet_")
+  ) {
+    for (let index = 0; index <= planetCount; index++) {
+      if (!(`planet_${index}` in calcValue)) {
+        let val = null;
+        if (key === "countdown") {
+          val = StorageGetInitialize("countdown", initCountdown, index);
+        } else if (key === "resource") {
+          val = StorageGetInitialize("resource", initResource, index);
+        } else if (key === "resourceGeneration") {
+          val = StorageGetInitialize("resourceGeneration", initResource, index);
+        }
+        calcValue[`planet_${index}`] = val;
       }
     }
   }
@@ -123,7 +153,7 @@ function sGetMultiplePlanetFunc(key) {
   }
   return false;
 }
-export function storageGet(key) {
+export function storageGet(key, planetNum = false) {
   const itemStr = localStorage.getItem(key);
   // if the item doesn't exist, return null
   if (!itemStr) {
@@ -141,19 +171,21 @@ export function storageGet(key) {
   }
 
   const calcProperty = sGetMultiplePlanetFunc(key);
-  if (calcProperty) {
+  if (planetNum !== false) {
+    return item.value[`planet_${planetNum}`];
+  } else if (calcProperty) {
     return item.value[calcProperty];
   }
 
   return item.value;
 }
-export function StorageGetInitialize(name, value) {
-  let item = storageGet(name);
+export function StorageGetInitialize(name, value, planetNum = false) {
+  let item = storageGet(name, planetNum);
   if (!item) item = value;
   return item;
 }
 
-export const mouseEvent = new MouseEvent("click", {
+export const createMouseEvent = new MouseEvent("click", {
   view: window,
   bubbles: true,
   cancelable: true,
@@ -200,4 +232,51 @@ var ev = new KeyboardEvent("keydown", {
   which: 13,
 });
 
-export default { storageSet, storageGet, StorageGetInitialize };
+const createCustomKeyboardEvent = (keyValue) => {
+  const eventOptions = {
+    bubbles: true, // Eğer doğruysa, olay üst elemandan aşağıya doğru yayılır
+    cancelable: true, // Olayın iptal edilebilir olup olmadığını belirler
+    key: keyValue, // Klavye tuşunun değeri (örn. '1' veya '6')
+  };
+
+  // Eğer tarayıcı klavye olaylarını desteklemiyorsa, KeyboardEvent'i düşük seviyeli şekilde oluşturun
+  if (typeof KeyboardEvent === "function") {
+    return new KeyboardEvent("keydown", eventOptions);
+  } else {
+    const event = document.createEvent("KeyboardEvent");
+    event.initKeyEvent(
+      "keypress",
+      true,
+      true,
+      window,
+      keyValue,
+      0,
+      "",
+      false,
+      ""
+    );
+    return event;
+  }
+};
+
+export const simulateKeyPress = (key) => {
+  const customEvent = createCustomKeyboardEvent(key);
+  document.dispatchEvent(customEvent);
+};
+
+export default {
+  timeout,
+  timestampToDate,
+  getElId,
+  strToNumber,
+  mathStabileRound,
+  isNumeric,
+  isArrayEqual,
+  storageSet,
+  storageGet,
+  StorageGetInitialize,
+  createMouseEvent,
+  dispatchKeyboardEvent,
+  createCustomKeyboardEvent,
+  simulateKeyPress,
+};
