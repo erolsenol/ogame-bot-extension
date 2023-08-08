@@ -415,7 +415,7 @@ function hasError() {
 
 function hasLogin() {
   const joinGame = getElId("joinGame");
-  if (joinGame) {
+  if (joinGame && false) {
     joinGame.children[1].click();
     return false;
   }
