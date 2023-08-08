@@ -2,7 +2,7 @@
   "name": "my-ex",
   "version": "0.0.1",
   "manifest_version": 3,
-  "permissions": ["tabs", "scripting", "webNavigation", "activeTab", "storage"],
+  "permissions": ["tabs", "tabGroups", "contextMenus", "scripting", "webNavigation", "storage"],
   "action": { "default_popup": "index.html" },
   "content_scripts": [
     {

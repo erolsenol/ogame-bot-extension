@@ -160,3 +160,13 @@ export const initSpyGalaxy = {
     system: 0,
   },
 };
+
+
+export const initCraftShip = {
+  name: "",
+  produceAmount: 0,
+  technologyNumber: "",
+  status: false,
+  produced: false,
+  endTime: 0,
+};

@@ -11,6 +11,8 @@ import {
   storageSet,
   storageGet,
   StorageGetInitialize,
+  mouseEvent,
+  dispatchKeyboardEvent,
 } from "./helper";
 
 import {
@@ -27,6 +29,7 @@ import {
   initTarget,
   initSpyGalaxy,
   initMyPlanetAttack,
+  initCraftShip,
 } from "./constant";
 
 console.log("content");
@@ -437,6 +440,7 @@ function uiInit() {
 setTimeout(uiInit, 1000);
 
 function gameInitialize() {
+  planetInitialize();
   getResources();
   getProducers();
   getFacilities();
@@ -445,7 +449,6 @@ function gameInitialize() {
   getShipyard();
   updateOvermark();
   getResourceGeneration();
-  planetInitialize();
 }
 
 async function planetInitialize() {
@@ -453,6 +456,7 @@ async function planetInitialize() {
   let activePlanetIndex = 0;
   if (planetList && planetList.children.length > 1) {
     storageSet("multiplePlanets", true, 360000000);
+    storageSet("planetCount", planetList.children.length - 1, 360000000);
     const planetEls = planetList.querySelectorAll("div[class~='smallplanet']");
     for (let index = 0; index < planetEls.length; index++) {
       const planet = planetEls[index];
@@ -543,20 +547,122 @@ async function start() {
 
   gameInitialize();
 
-  if (gameWayConditionCalc("attack")) {
+  if (await gameWayConditionCalc("shipyard")) {
     await attackTarget();
-  } else if (gameWayConditionCalc("spyGalaxy")) {
+  } else if (await gameWayConditionCalc("attack")) {
+    await attackTarget();
+  } else if (await gameWayConditionCalc("spyGalaxy")) {
     await spyGalaxyStart();
-  } else if (gameWayConditionCalc("message")) {
+  } else if (await gameWayConditionCalc("message")) {
     messageClear();
-  } else if (gameWayConditionCalc("standartDevelop")) {
+  } else if (await gameWayConditionCalc("discovery")) {
+    console.log("discovery function not found");
+  } else if (await gameWayConditionCalc("standartDevelop")) {
     await standartSuppliesDevelopment();
-  } else if (gameWayConditionCalc("lfbuildings")) {
+  } else if (await gameWayConditionCalc("lfbuildings")) {
     await standartLfbuildingsDevelopment();
+  } else if (await gameWayConditionCalc("research")) {
+    console.log("research function not found");
   }
 }
 
-function gameWayConditionCalc(type) {
+async function CraftShip() {
+  return new Promise(async (resolve, reject) => {
+    const craftShip = StorageGetInitialize("craftShip", initCraftShip);
+    if (!craftShip.status) {
+      return resolve(true);
+    }
+
+    return resolve(true);
+  });
+}
+
+//CraftShipsOrDefenses
+async function CraftShipsOrDefenses(
+  containerName,
+  menuNumber,
+  productName,
+  produceAmount,
+  technologyNumber
+) {
+  return new Promise(async (resolve, reject) => {
+    const container = getElId(containerName);
+    if (!container) {
+      await menuClick(menuNumber);
+      return resolve(true);
+    }
+    const technologydetails_wrapper = getElId("technologydetails_wrapper");
+    if (!technologydetails_wrapper) return resolve(true);
+
+    if (technologydetails_wrapper.getAttribute("class") !== "slide-up") {
+      const technologyEls = container.querySelectorAll(
+        "li[class~='technology']"
+      );
+      for (let index = 0; index < technologyEls.length; index++) {
+        const technologyEl = technologyEls[index];
+        if (technologyEl.getAttribute("class").includes(productName)) {
+          if (technologyEl.getAttribute("data-status") === "of") {
+            console.log(
+              `the technology is insufficient for the '${productName}' you want to produce`
+            );
+            reject(false);
+          }
+          technologyEl.children[0].click();
+          return resolve(true);
+        }
+      }
+    } else {
+      const productionboxshipyardcomponent = getElId(
+        "productionboxshipyardcomponent"
+      );
+      if (productionboxshipyardcomponent) {
+        const tableEl = productionboxshipyardcomponent.querySelector("table");
+        const firstA = tableEl.querySelector("a");
+        if (firstA.getAttribute("href").includes(technologyNumber)) {
+          const count = Number(
+            tableEl.querySelector("div[class='shipSumCount']").innerText
+          );
+          const shipyard = StorageGetInitialize("shipyard", initShipyard);
+          if (technologyNumber == "210") {
+            storageSet("shipyard", {
+              ...shipyard,
+              espionageProbe: shipyard.espionageProbe + count,
+            });
+          }
+
+          return resolve(true);
+        }
+        // return resolve(true);
+      }
+
+      const build_amount = getElId("build_amount");
+      if (build_amount.value != produceAmount) {
+        build_amount.setAttribute("value", produceAmount);
+        build_amount.value = produceAmount;
+        setTimeout(() => {
+          const enterEvent = dispatchKeyboardEvent(
+            "keydown",
+            "Enter",
+            "Enter",
+            13,
+            13
+          );
+          build_amount.dispatchEvent(enterEvent);
+        }, 350);
+        return resolve(true);
+      }
+
+      const upgradeBtn = technologydetails_wrapper.querySelector(
+        "button[class='upgrade']"
+      );
+      upgradeBtn.children[0].click();
+    }
+
+    return resolve(true);
+  });
+}
+
+async function gameWayConditionCalc(type) {
   if (!type) return false;
   const gamePlayStatus = StorageGetInitialize(
     "gamePlayStatus",
@@ -567,13 +673,27 @@ function gameWayConditionCalc(type) {
 
   const keys = Object.keys(countdown);
   let time = 0;
+  let countdownSmallTimeKey = "";
   keys.forEach((item) => {
     if (countdown[item] - now > time) {
       time = now - countdown[item];
+      countdownSmallTimeKey = item;
     }
   });
 
   if (time > 0) console.log("time", time);
+
+  if (
+    ["attack", "spyGalaxy", "message", "discovery", "research"].includes(
+      type
+    ) &&
+    time !== 0 &&
+    time < now
+  ) {
+    if (await changeActivePlanet(0)) {
+      return;
+    }
+  }
 
   if (type === "standartDevelop") {
     let remaningTime = 0;
@@ -591,6 +711,7 @@ function gameWayConditionCalc(type) {
 
   return gamePlayStatus[type].status === 1 && countdown[type] < now;
 }
+
 async function galaxySystemRun() {
   return new Promise((resolve, reject) => {
     const galaxycomponent = getElId("galaxycomponent");
@@ -643,12 +764,20 @@ async function galaxySystemRun() {
   });
 }
 
+//Espionage Drilling logic not finished write
 let fleetcycle = StorageGetInitialize("fleetcycle", 1);
 async function spyGalaxyStart() {
   const gamePlayStatus = StorageGetInitialize(
     "gamePlayStatus",
     initGamePlayStatus
   );
+
+  // const { espionageProbe } = StorageGetInitialize("shipyard", {
+  //   espionageProbe: 0,
+  // });
+  // if (espionageProbe < 10) {
+  //   return;
+  // }
 
   const galaxycomponent = getElId("galaxycomponent");
   if (!galaxycomponent) {
@@ -707,7 +836,10 @@ async function spyGalaxyStart() {
         .includes("status_abbr_vacation") &&
       !cellPlayerName.children[0]
         ?.getAttribute("class")
-        .includes("status_abbr_noob")
+        .includes("status_abbr_noob") &&
+      !cellPlayerName.children[0]
+        ?.getAttribute("class")
+        .includes("status_abbr_banned")
     ) {
       if (cellPlayerName.children.length > 1) {
         let symbols = cellPlayerName.children[1].querySelectorAll("span");
@@ -857,6 +989,7 @@ async function attackTarget() {
     );
 
     if (tpSmallCount < totalTSmall) {
+      // await CraftShipsOrDefenses("shipyard",6,'transporterSmall', 40, '202')
       countdown.message = now + 1200;
       storageSet("countdown", countdown);
       gamePlayStatus.message.status = 1;
@@ -882,10 +1015,12 @@ async function attackTarget() {
           ship.querySelector("input").focus();
           fleetcycle += 1;
           storageSet("fleetcycle", fleetcycle);
+          const military = getElId("military");
+          military.dispatchEvent(mouseEvent);
           break;
         }
       }
-      if (fleetcycle > 10) {
+      if (fleetcycle > 14) {
         storageSet("fleetcycle", 0);
         gamePlayStatus.message.status = 1;
         gamePlayStatus.attack.status = 0;
@@ -901,6 +1036,10 @@ async function attackTarget() {
         transporterSmall
           .querySelector("input")
           .setAttribute("value", totalTSmall);
+        setTimeout(() => {
+          const military = getElId("military");
+          military.dispatchEvent(mouseEvent);
+        }, 400);
       }, 500);
       return;
     }
@@ -1017,16 +1156,45 @@ async function messageClear() {
         return;
       }
 
-      const msgFleetPoint = Number(
-        messageContent.children[8].children[0].innerText
-          .replace(mInfoFleetText, "")
-          .replaceAll(".", "")
-      );
-      const msgDefencePoint = Number(
-        messageContent.children[8].children[1].innerText
-          .replace(mInfoDefenceText, "")
-          .replaceAll(".", "")
-      );
+      const msgFleetText = messageContent.children[8].children[0].innerText
+        .replace(mInfoFleetText, "")
+        .replaceAll(".", "");
+
+      let msgFleetPoint = 0;
+      if (msgFleetText.includes("m")) {
+        msgFleetPoint = Number(msgFleetText.replace("m", "")) * 1000;
+      } else {
+        try {
+          console.log("msgFleetText", msgFleetText);
+          msgFleetPoint = Number(msgFleetText);
+        } catch (error) {
+          messageEl
+            .querySelector(".fright")
+            .querySelector("a")
+            .children[0].click();
+          return;
+        }
+      }
+
+      const msgDefenceText = messageContent.children[8].children[1].innerText
+        .replace(mInfoDefenceText, "")
+        .replaceAll(".", "");
+
+      let msgDefencePoint = 0;
+      if (msgDefenceText.includes("m")) {
+        msgDefencePoint = Number(msgDefenceText.replace("m", "")) * 1000;
+      } else {
+        try {
+          console.log("msgDefenceText", msgDefenceText);
+          msgDefencePoint = Number(msgDefenceText);
+        } catch (error) {
+          messageEl
+            .querySelector(".fright")
+            .querySelector("a")
+            .children[0].click();
+          return;
+        }
+      }
 
       if (msgFleetPoint > 0 || msgDefencePoint > 0) {
         messagecycleUp();
@@ -1806,6 +1974,28 @@ function menuClick(number, subNumber = 0) {
     setTimeout(() => {
       resolve(true);
     }, 2000);
+  });
+}
+
+async function changeActivePlanet(planetNum) {
+  return new Promise((resolve, reject) => {
+    const planetList = getElId("planetList");
+    if (planetList) {
+      if (planetNum > planetList.children.length) {
+        console.log(`we currently do not have ${planetNum} planets`);
+        return resolve(false);
+      }
+
+      if (
+        !planetList.children[planetNum]
+          .getAttribute("class")
+          .includes("hightlightPlanet")
+      ) {
+        planetList.children[planetNum].children[0].click();
+        return resolve(true);
+      }
+    }
+    return resolve(false);
   });
 }
 
