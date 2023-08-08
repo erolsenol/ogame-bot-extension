@@ -1679,7 +1679,7 @@ async function standartSuppliesDevelopment() {
     storageGet("producer") || {};
   const producersEl = getElId("producers");
 
-  if (metalMine === 0) {
+  if (metalMine === 0 && !hasDevelopment) {
     await menuClick(1);
     return;
   }
