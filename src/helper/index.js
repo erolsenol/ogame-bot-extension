@@ -66,6 +66,7 @@ const planetSpecificFields = [
   "countdown",
   "resourceGeneration",
   "shipyard",
+  "craft",
 ];
 
 function sSetMultiplePlanetFunc(key, value) {
@@ -96,7 +97,6 @@ export function storageSet(key, value, ttl = 3600000) {
       initGamePlayStatus
     );
     for (let item in value) {
-      console.log("item", item);
       if (value[item].status) {
       } else {
       }

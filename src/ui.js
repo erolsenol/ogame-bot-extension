@@ -19,6 +19,11 @@ import {
   initShipyard,
   initGamePlayStatus,
   initMessageSetting,
+  initCraft,
+  defenceList,
+  shipList,
+  shipTecnologyNum,
+  defenceTecnologyNum,
 } from "./constant";
 
 const gamePlayStatus = StorageGetInitialize(
@@ -55,7 +60,7 @@ const init = (left) => {
     lmRect = leftMenu.getBoundingClientRect();
   }
   const body = document.querySelector("body");
-  body.style.height = "120%";
+  body.style.height = "140%";
 
   // var sheet = document.styleSheets[0];
   // console.log("sheet", sheet);
@@ -132,7 +137,7 @@ const init = (left) => {
   container.setAttribute("id", "my-container");
   container.setAttribute("class", "my-container");
   container.style.zIndex = "2";
-  container.style.height = "450px";
+  container.style.height = "600px";
   container.style.width = "178px";
   container.style.position = "absolute";
   container.style.border = `solid 1px red`;
@@ -245,7 +250,9 @@ function initEls(el) {
   const divAttack = generateDiv();
   const CbAttack = generateInput("checkbox", "cb-attack");
   CbAttack.checked =
-    gamePlayStatus.message.status || gamePlayStatus.attack.status;
+    gamePlayStatus.message.status ||
+    gamePlayStatus.attack.status ||
+    gamePlayStatus.spyGalaxy.status;
   CbAttack.style.border = `solid 1px ${CbAttack.checked ? "green" : "red"}`;
   CbAttack.addEventListener("input", function () {
     const gamePlayStatus = StorageGetInitialize(
@@ -270,6 +277,22 @@ function initEls(el) {
   const tooltipAttack = generateTooltip(attackDate);
   divAttack.append(tooltipAttack);
   el.append(divAttack);
+
+  const divCraft = generateDiv();
+  const CbCraft = generateInput("checkbox", "cb-craft");
+  CbCraft.checked =
+    gamePlayStatus.shipyard.status ||
+    gamePlayStatus.defense.status ||
+    gamePlayStatus.craft.status;
+  CbCraft.style.border = `solid 1px ${CbCraft.checked ? "green" : "red"}`;
+  // CbCraft.addEventListener("input", function () {});
+  divCraft.append(CbCraft);
+  const labelCraft = generateLabel("Craft Active", "cb-craft");
+  divCraft.append(labelCraft);
+  const craftDate = timestampToDate(countdown.message);
+  const tooltipCraft = generateTooltip(craftDate);
+  divCraft.append(tooltipCraft);
+  el.append(divCraft);
 
   const divSpyContainer = generateDiv();
   divSpyContainer.style.display = "flex";
@@ -447,27 +470,146 @@ function initEls(el) {
 
   el.append(divAttackContainer);
 
-  console.log("12312312312312");
-
   const divContainerCraftShip = generateDiv();
+  divContainerCraftShip.style.borderTop = "1px solid red";
+  divContainerCraftShip.style.flexDirection = "column";
+
   const divCraftShip = generateDiv();
+  divCraftShip.flexDirection = "row";
+  divCraftShip.style.marginTop = "5px";
   const labelCraftship = generateLabel("Ships", "select-ship");
   divCraftShip.append(labelCraftship);
-  const selectShip = generateSelectbox("select-ship", ["1", "2", "3", "4"]);
-  divCraftShip.append(selectShip);
 
+  const selectShip = generateSelectbox("select-ship", ["Select", ...shipList]);
+  divCraftShip.append(selectShip);
   divContainerCraftShip.append(divCraftShip);
+
+  const divShipArea = generateDiv();
+  const labelShipCount = generateLabel("Count", "input-ship-count");
+  const inputShipCount = generateInput("text", "input-ship-count");
+  inputShipCount.style.width = "60%";
+  inputShipCount.addEventListener("input", function ({ data }) {
+    if (data && !isNumeric(data)) {
+      const dataPop = data.slice(0, -1);
+      inputShipCount.value = dataPop;
+      return;
+    }
+  });
+  divShipArea.append(labelShipCount);
+  divShipArea.append(inputShipCount);
+  const labelShipRepeat = generateLabel("Repeat", "cb-ship-repeat");
+  const cbShipRepeat = generateInput("checkbox", "cb-ship-repeat");
+  divShipArea.append(labelShipRepeat);
+  divShipArea.append(cbShipRepeat);
+  divContainerCraftShip.append(divShipArea);
   el.append(divContainerCraftShip);
+
+  const divContainerCraftDefence = generateDiv();
+  divContainerCraftDefence.style.flexDirection = "column";
+  // divContainerCraftDefence.style.borderTop = "1px solid red";
+  const divCraftDefence = generateDiv();
+  divCraftDefence.flexDirection = "row";
+  divCraftDefence.style.marginTop = "5px";
+  const labelCraftDefence = generateLabel("Defences", "select-ship");
+  divCraftDefence.append(labelCraftDefence);
+  const selectDefence = generateSelectbox("select-defence", [
+    "Select",
+    ...defenceList,
+  ]);
+  divCraftDefence.append(selectDefence);
+  divContainerCraftDefence.append(divCraftDefence);
+  const divDefenceArea = generateDiv();
+  const labelDefenceCount = generateLabel("Count", "input-defence-count");
+  const inputDefenceCount = generateInput("text", "input-defence-count");
+  inputDefenceCount.style.width = "60%";
+  inputDefenceCount.addEventListener("input", function ({ data }) {
+    if (data && !isNumeric(data)) {
+      const dataPop = data.slice(0, -1);
+      inputDefenceCount.value = dataPop;
+      return;
+    }
+  });
+  divDefenceArea.append(labelDefenceCount);
+  divDefenceArea.append(inputDefenceCount);
+  const labelDefenceRepeat = generateLabel("Repeat", "cb-defence-repeat");
+  const cbDefenceRepeat = generateInput("checkbox", "cb-defence-repeat");
+  divDefenceArea.append(labelDefenceRepeat);
+  divDefenceArea.append(cbDefenceRepeat);
+  divContainerCraftDefence.append(divDefenceArea);
+  const buttonShipDefence = generateButton("Generation");
+  buttonShipDefence.style.width = "60%";
+  buttonShipDefence.style.height = "20px";
+  buttonShipDefence.style.fontSize = "14px";
+  buttonShipDefence.addEventListener("click", function () {
+    const productionOrder = StorageGetInitialize("craft", []);
+    const shipCount = inputShipCount.value;
+    const defenceCount = inputDefenceCount.value;
+    const shipName = selectShip.value;
+    const defenceName = selectDefence.value;
+    const craftData = {
+      name: "",
+      produceAmount: 0,
+      technologyNumber: "",
+      status: false,
+      produced: false,
+      type: "",
+      repeat: false,
+      remainingTime: 0,
+      endTime: 0,
+    };
+
+    if (shipCount > 0 && shipList.includes(shipName)) {
+      craftData.name = shipName;
+      craftData.produceAmount = shipCount;
+      craftData.type = "shipyard";
+      craftData.repeat = cbShipRepeat.checked;
+      craftData.technologyNumber = shipTecnologyNum[shipName];
+      productionOrder.push({ ...craftData });
+    }
+    if (defenceCount > 0 && defenceList.includes(defenceName)) {
+      craftData.name = defenceName;
+      craftData.produceAmount = defenceCount;
+      craftData.type = "defense";
+      craftData.repeat = cbDefenceRepeat.checked;
+      craftData.technologyNumber = defenceTecnologyNum[defenceName];
+      productionOrder.push({ ...craftData });
+    }
+    if (productionOrder.length > 0) {
+      storageSet("craft", productionOrder);
+      const gamePlayStatus = StorageGetInitialize(
+        "gamePlayStatus",
+        initGamePlayStatus
+      );
+      gamePlayStatus.craft.status = 1;
+      storageSet("gamePlayStatus", gamePlayStatus);
+    }
+
+    inputShipCount.value = 0;
+    inputDefenceCount.value = 0;
+    selectShip.value = "Select";
+    selectDefence.value = "Select";
+  });
+  divContainerCraftDefence.append(buttonShipDefence);
+
+  el.append(divContainerCraftDefence);
 }
 
 function generateSelectbox(id, options) {
   const select = document.createElement("select");
-  select.style.height = "45px";
+  select.style.height = "25px";
+  select.style.width = "100%";
+  select.style.fontSize = "14px";
+  select.style.marginRight = "5px";
+  select.style.marginLeft = "5px";
   select.id = id;
 
   options.forEach((item) => {
     const option = document.createElement("option");
     option.setAttribute("value", item);
+    option.style.fontSize = "14px";
+    option.style.paddingTop = "6px";
+    option.style.paddingBottom = "4px";
+    // option.style.marginTop = "3px";
     option.innerText = item;
     select.append(option);
   });

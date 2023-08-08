@@ -29,7 +29,7 @@ import {
   initTarget,
   initSpyGalaxy,
   initMyPlanetAttack,
-  initCraftShip,
+  initCraft,
 } from "./constant";
 
 console.log("content");
@@ -57,6 +57,7 @@ const gamePlayStatus = StorageGetInitialize(
 const spyGalaxy = StorageGetInitialize("spyGalaxy", initSpyGalaxy);
 let hasDevelopment = StorageGetInitialize("hasDevelopment", false);
 let gameReload = false;
+const now = mathStabileRound(Date.now() / 1000);
 
 //resource
 //gameStatus.energyLow
@@ -547,8 +548,8 @@ async function start() {
 
   gameInitialize();
 
-  if (await gameWayConditionCalc("shipyard")) {
-    await attackTarget();
+  if (await gameWayConditionCalc("craft")) {
+    await CraftShip();
   } else if (await gameWayConditionCalc("attack")) {
     await attackTarget();
   } else if (await gameWayConditionCalc("spyGalaxy")) {
@@ -568,10 +569,46 @@ async function start() {
 
 async function CraftShip() {
   return new Promise(async (resolve, reject) => {
-    const craftShip = StorageGetInitialize("craftShip", initCraftShip);
-    if (!craftShip.status) {
+    const now = mathStabileRound(Date.now() / 1000);
+    const gamePlayStatus = StorageGetInitialize(
+      "gamePlayStatus",
+      initGamePlayStatus
+    );
+    const craftShip = StorageGetInitialize("craft", []);
+    if (craftShip.length < 1) {
+      gamePlayStatus.craft.status = 0;
+      storageSet("gamePlayStatus", gamePlayStatus);
       return resolve(true);
     }
+
+    if (craftShip[0].endTime !== 0 && craftShip[0].endTime < now) {
+      if (!craftShip[0].repeat) {
+        const increaseCraft = craftShip.splice(0, 1);
+        storageSet("craft", increaseCraft);
+      } else {
+        craftShip[0].produced = false;
+        craftShip[0].endTime = 0;
+      }
+      return resolve(true);
+    }
+
+    if (craftShip[0].endTime < now) {
+      const menuNum = craftShip[0].type == "shipyard" ? 6 : 7;
+      await CraftShipsOrDefenses(
+        craftShip[0].type,
+        menuNum,
+        craftShip[0].name,
+        craftShip[0].produceAmount,
+        craftShip[0].technologyNumber
+      );
+      return resolve(true);
+    }
+
+    console.log("craftShip", craftShip[0]);
+
+    const countdown = StorageGetInitialize("countdown", initCountdown);
+    countdown.craft = now + 1800;
+    storageSet("countdown", countdown);
 
     return resolve(true);
   });
@@ -619,16 +656,30 @@ async function CraftShipsOrDefenses(
         const tableEl = productionboxshipyardcomponent.querySelector("table");
         const firstA = tableEl.querySelector("a");
         if (firstA.getAttribute("href").includes(technologyNumber)) {
-          const count = Number(
-            tableEl.querySelector("div[class='shipSumCount']").innerText
-          );
-          const shipyard = StorageGetInitialize("shipyard", initShipyard);
-          if (technologyNumber == "210") {
-            storageSet("shipyard", {
-              ...shipyard,
-              espionageProbe: shipyard.espionageProbe + count,
-            });
+          const craftShip = StorageGetInitialize("craft", []);
+          const countdownshipDetails = getElId("countdownshipDetails");
+          if (craftShip.length > 0 && countdownshipDetails) {
+            const countdown = StorageGetInitialize("countdown", initCountdown);
+            countdown.craft = Number(
+              countdownshipDetails.getAttribute("data-end")
+            );
+            craftShip[0].produced = true;
+            craftShip[0].endTime = countdown.craft;
+
+            storageSet("craft", craftShip);
+            storageSet("countdown", countdown);
+            return resolve(true);
           }
+          // const count = Number(
+          //   tableEl.querySelector("div[class='shipSumCount']").innerText
+          // );
+          // const shipyard = StorageGetInitialize("shipyard", initShipyard);
+          // if (technologyNumber == "210") {
+          //   storageSet("shipyard", {
+          //     ...shipyard,
+          //     espionageProbe: shipyard.espionageProbe + count,
+          //   });
+          // }
 
           return resolve(true);
         }
@@ -696,17 +747,26 @@ async function gameWayConditionCalc(type) {
   }
 
   if (type === "standartDevelop") {
-    let remaningTime = 0;
+    let remainingTime = 0;
     if (hasDevelopment) {
       const keys = Object.keys(countdown);
       keys.forEach((key) => {
-        if (countdown[key] > 0 && countdown[key] > remaningTime) {
-          remaningTime = countdown[key];
+        if (countdown[key] > 0 && countdown[key] > remainingTime) {
+          remainingTime = countdown[key];
         }
       });
-      return gamePlayStatus.producers.status && remaningTime < now;
+      return gamePlayStatus.producers.status && remainingTime < now;
     }
     return gamePlayStatus.producers.status && countdown.producers < now;
+  } else if (type === "craft") {
+    const craft = StorageGetInitialize("craft", []);
+    return (
+      gamePlayStatus[type].status === 1 &&
+      countdown[type] < now &&
+      craft.length > 0 &&
+      // craft[0].endTime < now &&
+      craft[0].remainingTime < now
+    );
   }
 
   return gamePlayStatus[type].status === 1 && countdown[type] < now;
@@ -990,10 +1050,24 @@ async function attackTarget() {
 
     if (tpSmallCount < totalTSmall) {
       // await CraftShipsOrDefenses("shipyard",6,'transporterSmall', 40, '202')
-      countdown.message = now + 1200;
+      // countdown.message = now + 1200;
+      // gamePlayStatus.message.status = 1;
+      gamePlayStatus.craft.status = 1;
+      const craft = StorageGetInitialize("craft", []);
+      const craftData = {
+        name: "transporterSmall",
+        produceAmount: totalTSmall + 10,
+        technologyNumber: "202",
+        status: false,
+        produced: false,
+        type: "shipyard",
+        repeat: false,
+        remainingTime: 0,
+        endTime: 0,
+      };
+      craft.push(craftData);
+      storageSet("craft", craft);
       storageSet("countdown", countdown);
-      gamePlayStatus.message.status = 1;
-      gamePlayStatus.attack.status = 0;
       storageSet("gamePlayStatus", gamePlayStatus);
       console.log("Not Found Ship");
       return;
@@ -1028,6 +1102,7 @@ async function attackTarget() {
         return;
       }
     } else {
+      await sendMessageServiceWorker("attackShipInput");
       console.log("focus:", transporterSmall.querySelector("input"));
       fleetcycle += 1;
       transporterSmall.querySelector("input").focus();
@@ -1075,6 +1150,49 @@ async function attackTarget() {
     storageSet("fleetcycle", 0);
     return;
   }
+}
+
+// navigator.serviceWorker.register example
+// if ("serviceWorker" in navigator) {
+//   window.addEventListener("load", () => {
+//     console.log("load completed");
+//     navigator.serviceWorker
+//       .register("background.js")
+//       .then((registration) => {
+//         console.log("Service Worker registered:", registration);
+//         // Hizmet çalışanı başarılı bir şekilde kaydedildi, burada controller değeri artık null olmamalıdır.
+//         // Bundan sonra mesaj göndermeye devam edebilirsiniz.
+//       })
+//       .catch((error) => {
+//         console.error("Service Worker registration failed:", error);
+//       });
+//   });
+// }
+
+async function sendMessageServiceWorker(
+  type = "triggerFunction",
+  payload = {}
+) {
+  return new Promise((resolve, reject) => {
+    const message = {
+      type: type,
+      payload: payload,
+    };
+
+    if (
+      chrome &&
+      chrome.runtime &&
+      chrome.runtime.hasOwnProperty("sendMessage")
+    ) {
+      chrome.runtime.sendMessage(message, function (response) {
+        if (response === "OK") {
+          return resolve(true);
+        }
+      });
+    } else {
+      return resolve(false);
+    }
+  });
 }
 
 const mInfoFleetText = "Filolar: ";
@@ -1165,9 +1283,9 @@ async function messageClear() {
         msgFleetPoint = Number(msgFleetText.replace("m", "")) * 1000;
       } else {
         try {
-          console.log("msgFleetText", msgFleetText);
           msgFleetPoint = Number(msgFleetText);
         } catch (error) {
+          console.log("msgFleetText error:", error);
           messageEl
             .querySelector(".fright")
             .querySelector("a")
@@ -1185,9 +1303,9 @@ async function messageClear() {
         msgDefencePoint = Number(msgDefenceText.replace("m", "")) * 1000;
       } else {
         try {
-          console.log("msgDefenceText", msgDefenceText);
           msgDefencePoint = Number(msgDefenceText);
         } catch (error) {
+          console.log("msgDefenceText error:", error);
           messageEl
             .querySelector(".fright")
             .querySelector("a")
@@ -1791,7 +1909,7 @@ function specifiedUpgradeTimeCalculation(mineEl, detailName, countdownSetName) {
           return;
         }
 
-        let remaningTime = 0;
+        let remainingTime = 0;
         const costsArea = technologyDetails.querySelector("div[class='costs']");
         costsArea.querySelectorAll("li").forEach((costItem) => {
           const classText = costItem.getAttribute("class");
@@ -1803,7 +1921,7 @@ function specifiedUpgradeTimeCalculation(mineEl, detailName, countdownSetName) {
               const productionSecond = mathStabileRound(
                 (Math.abs(difference) / mineProduction.metal) * 60 * 60
               );
-              remaningTime = productionSecond;
+              remainingTime = productionSecond;
             }
           } else if (classText && classText.includes("crystal")) {
             const requirement = Number(costItem.getAttribute("data-value"));
@@ -1812,8 +1930,8 @@ function specifiedUpgradeTimeCalculation(mineEl, detailName, countdownSetName) {
               const productionSecond = mathStabileRound(
                 (Math.abs(difference) / mineProduction.crystal) * 60 * 60
               );
-              if (remaningTime < productionSecond) {
-                remaningTime = productionSecond;
+              if (remainingTime < productionSecond) {
+                remainingTime = productionSecond;
               }
             }
           } else if (classText && classText.includes("deuterium")) {
@@ -1823,17 +1941,17 @@ function specifiedUpgradeTimeCalculation(mineEl, detailName, countdownSetName) {
               const productionSecond = mathStabileRound(
                 (Math.abs(difference) / mineProduction.deuterium) * 60 * 60
               );
-              if (remaningTime < productionSecond) {
-                remaningTime = productionSecond;
+              if (remainingTime < productionSecond) {
+                remainingTime = productionSecond;
               }
             }
           }
         });
         const countdown = StorageGetInitialize("countdown", initCountdown);
         const now = mathStabileRound(Date.now() / 1000);
-        countdown[countdownSetName] = remaningTime + now;
+        countdown[countdownSetName] = remainingTime + now;
         storageSet("countdown", countdown);
-        if (!(remaningTime + now > now) && !gameReload) {
+        if (!(remainingTime + now > now) && !gameReload) {
           gameReload = true;
           location.reload();
         }
@@ -1902,7 +2020,7 @@ function mineUpgradeTimeCalculation(mineEl, detailName) {
           return;
         }
 
-        let remaningTime = 0;
+        let remainingTime = 0;
         const costsArea = technologyDetails.querySelector("div[class='costs']");
         costsArea.querySelectorAll("li").forEach((costItem) => {
           const classText = costItem.getAttribute("class");
@@ -1914,7 +2032,7 @@ function mineUpgradeTimeCalculation(mineEl, detailName) {
               const productionSecond = mathStabileRound(
                 (Math.abs(difference) / mineProduction.metal) * 60 * 60
               );
-              remaningTime = productionSecond;
+              remainingTime = productionSecond;
             }
           } else if (classText && classText.includes("crystal")) {
             const requirement = Number(costItem.getAttribute("data-value"));
@@ -1923,8 +2041,8 @@ function mineUpgradeTimeCalculation(mineEl, detailName) {
               const productionSecond = mathStabileRound(
                 (Math.abs(difference) / mineProduction.crystal) * 60 * 60
               );
-              if (remaningTime < productionSecond) {
-                remaningTime = productionSecond;
+              if (remainingTime < productionSecond) {
+                remainingTime = productionSecond;
               }
             }
           } else if (classText && classText.includes("deuterium")) {
@@ -1934,17 +2052,17 @@ function mineUpgradeTimeCalculation(mineEl, detailName) {
               const productionSecond = mathStabileRound(
                 (Math.abs(difference) / mineProduction.deuterium) * 60 * 60
               );
-              if (remaningTime < productionSecond) {
-                remaningTime = productionSecond;
+              if (remainingTime < productionSecond) {
+                remainingTime = productionSecond;
               }
             }
           }
         });
         const countdown = StorageGetInitialize("countdown", initCountdown);
         const now = mathStabileRound(Date.now() / 1000);
-        countdown.producers = remaningTime + now;
+        countdown.producers = remainingTime + now;
         storageSet("countdown", countdown);
-        if (!(remaningTime + now > now) && !gameReload) {
+        if (!(remainingTime + now > now) && !gameReload) {
           gameReload = true;
           location.reload();
         }
