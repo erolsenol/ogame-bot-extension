@@ -119,7 +119,7 @@ const init = (left) => {
 
   //font-awesome
   const myCss = getElId("my-css");
-  if (!myCss) {
+  if (!myCss && document) {
     const fasome = document.createElement("link");
     fasome.setAttribute("rel", "stylesheet");
     fasome.setAttribute("id", "my-css");
