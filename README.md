@@ -1,18 +1,15 @@
 # OGame browser extension experiment
 
-An older Vite-powered browser extension experiment for OGame.
+A Vue 3 and Vuetify browser extension experiment built with Vite and CRXJS. It adds a popup and a content script for Gameforge pages; review the requested permissions in `manifest.json` before installing it.
 
-> **Status:** Historical example; currently not actively maintained.
+## Development
 
-## Local commands
-
-These commands reflect the repository scripts. This historical project has not been validated against current runtimes.
+Use Node.js 22 or newer:
 
 ```sh
-npm install
+npm ci
 npm run dev
 npm run build
 ```
-## Use and maintenance
 
-This repository is retained as a public record of earlier work. Dependencies and third-party services may have changed. Review the source and configuration before running it. No license is granted unless a `LICENSE` file is present.
+Load the generated extension from `dist/` using Chrome's extension developer mode. This is an old game-specific experiment and its UI or selectors may need updates as OGame changes. No license is granted unless a `LICENSE` file is present.

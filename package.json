@@ -8,18 +8,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@mdi/font": "^7.2.96",
-    "jquery": "^3.7.0",
-    "moment": "^2.29.4",
-    "npm": "^9.8.1",
-    "qs": "^6.11.2",
-    "robotjs": "^0.6.0",
-    "vue": "^3.3.4",
-    "vuetify": "^3.3.9"
+    "moment": "^2.30.2",
+    "vue": "^3.5.43",
+    "vuetify": "^4.2.3",
+    "@mdi/font": "^7.4.47",
+    "qs": "^6.16.0",
+    "jquery": "^4.0.0"
   },
   "devDependencies": {
-    "@crxjs/vite-plugin": "^1.0.14",
-    "@vitejs/plugin-vue": "^2.3.3",
-    "vite": "^2.9.16"
-  }
+    "@crxjs/vite-plugin": "^3.0.0",
+    "@vitejs/plugin-vue": "^6.0.9",
+    "vite": "^8.3.2"
+  },
+  "type": "module"
 }
