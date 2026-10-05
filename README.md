@@ -1,7 +1,18 @@
-# Vue 3 + Vite
+# OGame browser extension experiment
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+An older Vite-powered browser extension experiment for OGame.
 
-## Recommended IDE Setup
+> **Status:** Historical example; currently not actively maintained.
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar)
+## Local commands
+
+These commands reflect the repository scripts. This historical project has not been validated against current runtimes.
+
+```sh
+npm install
+npm run dev
+npm run build
+```
+## Use and maintenance
+
+This repository is retained as a public record of earlier work. Dependencies and third-party services may have changed. Review the source and configuration before running it. No license is granted unless a `LICENSE` file is present.
