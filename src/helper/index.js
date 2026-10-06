@@ -41,14 +41,9 @@ export function isNumeric(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
-export function isArrayEqual(val1, val2) {
-  let isEqual = true;
-  if (val2 && val1.length === val2.length) {
-    for (i = 0; i < val1.length; i++) {
-      if (val1[i] !== val2[i]) isEqual = false;
-    }
-  } else isEqual = false;
-  return isEqual;
+export function isArrayEqual(left, right) {
+  return Array.isArray(left) && Array.isArray(right) && left.length === right.length &&
+    left.every((value, index) => value === right[index]);
 }
 
 function getActivePlanet() {
@@ -160,7 +155,9 @@ export function storageGet(key, planetNum = false) {
     return null;
   }
 
-  const item = JSON.parse(itemStr);
+  let item;
+  try { item = JSON.parse(itemStr); } catch { return null; }
+  if (!item || typeof item !== 'object' || !Number.isFinite(item.expiry) || !('value' in item)) return null;
   const now = new Date();
   // compare the expiry time of the item with the current time
   if (now.getTime() > item.expiry) {
