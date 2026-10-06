@@ -1,24 +1,29 @@
 {
   "name": "ogame-extension",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.1.0",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "moment": "^2.30.2",
-    "vue": "^3.5.43",
-    "vuetify": "^4.2.3",
     "@mdi/font": "^7.4.47",
+    "jquery": "^4.0.0",
+    "moment": "^2.30.2",
     "qs": "^6.16.0",
-    "jquery": "^4.0.0"
+    "vue": "^3.5.43",
+    "vuetify": "^4.2.3"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^3.0.0",
+    "@types/chrome": "^0.3.4",
     "@vitejs/plugin-vue": "^6.0.9",
-    "vite": "^8.3.2"
+    "typescript": "^7.0.2",
+    "vite": "^8.3.2",
+    "vitest": "^5.0.3"
   },
   "type": "module"
 }

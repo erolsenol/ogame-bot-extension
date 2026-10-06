@@ -1,27 +1,25 @@
 {
-  "name": "my-ex",
-  "version": "0.0.1",
+  "name": "OGame helper experiment",
+  "version": "0.1.0",
   "manifest_version": 3,
-  "permissions": [
-    "tabs",
-    "tabGroups",
-    "contextMenus",
-    "scripting",
-    "webNavigation",
-    "storage",
-    "offscreen"
-  ],
-  "action": { "default_popup": "index.html" },
+  "permissions": [],
+  "action": {
+    "default_popup": "index.html"
+  },
   "minimum_chrome_version": "92",
   "background": {
-    "service_worker": "./background.js",
+    "service_worker": "background.ts",
     "type": "module"
   },
   "content_scripts": [
     {
-      "matches": ["https://*.gameforge.com/*"],
-      "all_frames": true,
-      "js": ["src/content.js"],
+      "matches": [
+        "https://*.ogame.gameforge.com/game/*"
+      ],
+      "all_frames": false,
+      "js": [
+        "src/content.js"
+      ],
       "run_at": "document_end"
     }
   ]
